@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#2f6f62">
+<title>Daily Notes</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f3ee; --surface:#ffffff; --ink:#2a2622; --muted:#776f67; --line:#e4ded5;
+  --accent:#2f6f62; --accent-ink:#ffffff; --accent-soft:#e3efeb;
+  --warn:#9a5212; --warn-soft:#fbecd8; --danger:#b3261e; --mark:#ffe58f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:none;cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+[hidden]{display:none!important}
+
+#app{display:flex;flex-direction:column;height:100dvh;max-width:720px;margin:0 auto;padding-top:env(safe-area-inset-top)}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.view{display:none;flex:1;min-height:0;flex-direction:column}
+.view.active{display:flex}
+.scroll{overflow-y:auto;flex:1;min-height:0;padding:4px 16px 24px}
+h2{font-size:1.15rem;font-weight:650;padding:14px 16px 6px}
+
+.btn{min-height:44px;padding:0 18px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:550}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.wide{width:100%;margin-top:10px}
+.textbtn{min-height:44px;padding:0 10px;color:var(--muted);font-weight:550}
+.textbtn.danger{color:var(--danger)}
+.chip{min-height:36px;padding:0 14px;border-radius:18px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:.9rem}
+.iconbtn{width:48px;height:48px;border-radius:24px;font-size:1.8rem;line-height:1;color:var(--accent)}
+.iconbtn:active,.btn:active,.chip:active{filter:brightness(.92)}
+
+/* backup banner */
+.banner{margin:10px 16px 0;padding:9px 12px;border-radius:10px;text-align:left;font-size:.88rem;background:var(--accent-soft);color:var(--accent)}
+.banner.warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
+
+/* write view */
+.datebar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 0}
+.datelabel{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px 0;border-radius:12px}
+#dlMain{font-size:1.25rem;font-weight:700}
+#dlSub{font-size:.85rem;color:var(--muted)}
+.todayrow{display:flex;justify-content:center;padding:2px 0 4px}
+#editor{flex:1;min-height:0;margin:8px 16px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-size:17px;line-height:1.55;resize:none;outline:none}
+#editor:focus{border-color:var(--accent)}
+.editfoot{display:flex;align-items:center;gap:6px;padding:8px 16px 10px}
+.status{flex:1;font-size:.85rem;color:var(--muted)}
+.status.err{color:var(--danger);font-weight:600}
+
+/* search view */
+.searchbar{padding:12px 16px 6px;display:flex;flex-direction:column;gap:8px}
+#q{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:17px;outline:none}
+#q:focus{border-color:var(--accent)}
+select,input[type=date]{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.customrange{display:flex;gap:8px}
+.customrange label{flex:1;display:flex;flex-direction:column;font-size:.8rem;color:var(--muted);gap:2px}
+.customrange input{width:100%;color:var(--ink)}
+.hint{font-size:.85rem;color:var(--muted);padding:2px 0 8px}
+.meta{font-size:.9rem;font-weight:600;padding:4px 0 8px}
+.result{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.result .rdate{font-weight:650;font-size:.92rem;color:var(--accent);margin-bottom:3px}
+.result .rline{font-size:.95rem;overflow-wrap:anywhere}
+.result .rline+.rline{margin-top:4px;padding-top:4px;border-top:1px dashed var(--line)}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+
+/* calendar view */
+.calnav{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 0}
+#calTitle{font-size:1.15rem;font-weight:700}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:8px 12px}
+.calhead{text-align:center;font-size:.78rem;color:var(--muted);font-weight:600;padding:4px 0}
+.day{aspect-ratio:1/1;max-height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:550;width:100%}
+.day .dot{width:6px;height:6px;border-radius:3px;background:transparent}
+.day.has .dot{background:var(--accent)}
+.day.today{border:2px solid var(--accent)}
+.day.sel{background:var(--accent);color:var(--accent-ink)}
+.day.sel.has .dot{background:var(--accent-ink)}
+.day:disabled{background:transparent;border-color:transparent}
+.calfoot{display:flex;align-items:center;justify-content:space-between;padding:4px 16px;font-size:.9rem;color:var(--muted)}
+
+/* backup view */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:1rem;margin-bottom:4px}
+.card p{font-size:.9rem;color:var(--muted)}
+.card p strong{color:var(--ink)}
+.bigstat{font-size:1.05rem;font-weight:650;margin-bottom:2px}
+.bigstat.warn{color:var(--warn)}
+
+/* bottom nav */
+nav{display:flex;border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.75rem;color:var(--muted);font-weight:600}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent)}
+
+/* dialog */
+.overlay{position:fixed;inset:0;background:rgba(20,16,12,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:16px}
+.sheet{background:var(--surface);border-radius:18px;padding:18px;width:100%;max-width:480px;margin-bottom:env(safe-area-inset-bottom)}
+.sheet h3{font-size:1.1rem;margin-bottom:6px}
+.sheet p{color:var(--muted);font-size:.95rem;white-space:pre-line;margin-bottom:14px}
+.sheet .btns{display:flex;flex-direction:column;gap:8px}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+
+  <!-- WRITE -->
+  <section id="v-write" class="view active">
+    <button id="banner" class="banner" hidden></button>
+    <div class="datebar">
+      <button id="prevDay" class="iconbtn" aria-label="Previous day">‹</button>
+      <button id="dateLabel" class="datelabel" aria-label="Open calendar"><span id="dlMain"></span><span id="dlSub"></span></button>
+      <button id="nextDay" class="iconbtn" aria-label="Next day">›</button>
+    </div>
+    <div id="todayRow" class="todayrow" hidden><button id="goToday" class="chip">Back to today</button></div>
+    <textarea id="editor" placeholder="Tap here to write…" spellcheck="true" autocapitalize="sentences" aria-label="Diary entry"></textarea>
+    <div class="editfoot">
+      <span id="status" class="status"></span>
+      <button id="delBtn" class="textbtn danger">Delete</button>
+      <button id="addBtn" class="btn primary">+ Add entry</button>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <section id="v-search" class="view">
+    <div class="searchbar">
+      <input id="q" type="search" placeholder="Search your notes" enterkeyhint="search" autocomplete="off" aria-label="Search">
+      <select id="range" aria-label="Date range">
+        <option value="all">All time</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 3 months</option>
+        <option value="365">Last 12 months</option>
+        <option value="year">This year</option>
+        <option value="custom">Custom dates…</option>
+      </select>
+      <div id="customRange" class="customrange" hidden>
+        <label>From<input type="date" id="from"></label>
+        <label>To<input type="date" id="to"></label>
+      </div>
+    </div>
+    <div class="scroll">
+      <p class="hint">Words match in any order. Use "quotes" for an exact phrase. #tags work too.</p>
+      <div id="sMeta" class="meta"></div>
+      <div id="results"></div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section id="v-cal" class="view">
+    <div class="calnav">
+      <button id="calPrev" class="iconbtn" aria-label="Previous month">‹</button>
+      <span id="calTitle"></span>
+      <button id="calNext" class="iconbtn" aria-label="Next month">›</button>
+    </div>
+    <div id="calGrid" class="calgrid"></div>
+    <div class="calfoot"><span id="calCount"></span><button id="calToday" class="chip">Today</button></div>
+  </section>
+
+  <!-- BACKUP -->
+  <section id="v-backup" class="view">
+    <h2>Backup</h2>
+    <div class="scroll">
+      <div class="card">
+        <div id="bkStat" class="bigstat"></div>
+        <p id="bkInfo"></p>
+        <button id="exportBtn" class="btn primary wide">Back up now</button>
+        <p style="margin-top:8px">Opens the share menu. Choose <strong>Drive</strong> to save it there.</p>
+      </div>
+      <div class="card">
+        <h3>Restore</h3>
+        <p>Load a backup file (from Drive or your phone). You'll be asked before anything is replaced.</p>
+        <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
+        <button id="importBtn" class="btn wide">Restore from backup…</button>
+      </div>
+      <div class="card">
+        <h3>Readable copy</h3>
+        <p>All entries as a plain text file you can read anywhere. Can't be restored from — use "Back up now" for that.</p>
+        <button id="exportTxtBtn" class="btn wide">Export as text</button>
+      </div>
+      <div class="card">
+        <h3>Where your notes live</h3>
+        <p id="storeInfo">Only on this phone, inside Chrome. Clearing Chrome's data or uninstalling Chrome deletes them — that's what backups are for.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <button data-view="write" class="on"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Write</button>
+  <button data-view="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button>
+  <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendar</button>
+  <button data-view="backup"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Backup</button>
+</nav>
+</div>
+
+<div id="dlg" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgMsg"></p>
+    <div id="dlgBtns" class="btns"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const DAY_MS = 86400000;
+const DRAFT_KEY = 'dn_draft';
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }; // local time, never UTC
+const todayKey = () => keyOf(new Date());
+const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const isValidKey = k => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k) && keyOf(parseKey(k)) === k;
+const fmtDate = (k, o) => parseKey(k).toLocaleDateString('en-US', o);
+const fmtLong = k => fmtDate(k, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nbsp = s => s.replace(/[  ]/g, ' ');
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+// Timestamp lines the app writes, e.g. "— 9:40 PM —" or "— added Oct 27, 9:40 PM —"
+const STAMP_RE = /^— (?:(?:added [A-Z][a-z]{2} \d{1,2}(?:, \d{4})?, )?\d{1,2}:\d{2} [AP]M|from backup) —$/;
+const isStamp = line => STAMP_RE.test(line.trim());
+const contentOf = text => (text || '').split('\n').filter(l => !isStamp(l)).join('\n');
+const meaningful = text => contentOf(text).trim().length > 0;
+
+/* ---------- database (IndexedDB) ---------- */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('daily-notes', 1);
+      r.onupgradeneeded = () => {
+        r.result.createObjectStore('entries', { keyPath: 'date' });
+        r.result.createObjectStore('meta', { keyPath: 'key' });
+      };
+      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  tx(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode);
+      let out; const r = fn(t.objectStore(store));
+      if (r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error || new Error('aborted'));
+    });
+  },
+  all() { return this.tx('entries', 'readonly', s => s.getAll()); },
+  put(e) { return this.tx('entries', 'readwrite', s => s.put(e)); },
+  del(k) { return this.tx('entries', 'readwrite', s => s.delete(k)); },
+  putMany(list) { return this.tx('entries', 'readwrite', s => { list.forEach(e => s.put(e)); }); },
+  getMeta(k) { return this.tx('meta', 'readonly', s => s.get(k)).then(r => r ? r.value : undefined); },
+  setMeta(k, v) { return this.tx('meta', 'readwrite', s => s.put({ key: k, value: v })); }
+};
+
+const entries = new Map(); // date -> {date, text, updated}
+let lastBackup = null;
+let dbOK = false;
+
+async function persistEntry(date, text) {
+  if (meaningful(text)) {
+    const e = { date, text, updated: Date.now() };
+    await DB.put(e);
+    entries.set(date, e);
+    requestPersist();
+  } else if (entries.has(date)) {
+    await DB.del(date);
+    entries.delete(date);
+  }
+}
+
+let persistAsked = false;
+function requestPersist() {
+  if (persistAsked || !navigator.storage || !navigator.storage.persist) return;
+  persistAsked = true;
+  navigator.storage.persisted().then(p => p || navigator.storage.persist()).catch(() => {});
+}
+
+/* ---------- dialog ---------- */
+function ask(title, msg, buttons) {
+  return new Promise(res => {
+    $('#dlgTitle').textContent = title;
+    $('#dlgMsg').textContent = msg;
+    const box = $('#dlgBtns'); box.innerHTML = '';
+    buttons.forEach(b => {
+      const el = document.createElement('button');
+      el.className = 'btn ' + (b.kind || '');
+      el.textContent = b.label;
+      el.onclick = () => { $('#dlg').hidden = true; res(b.value); };
+      box.appendChild(el);
+    });
+    $('#dlg').hidden = false;
+  });
+}
+const tell = (title, msg) => ask(title, msg, [{ label: 'OK', value: true, kind: 'primary' }]);
+
+/* ---------- views ---------- */
+let view = 'write';
+async function showView(v) {
+  if (view === 'write' && v !== 'write') await leaveDay();
+  view = v;
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'v-' + v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  if (v === 'write') { renderDateBar(); renderBanner(); }
+  if (v === 'search') runSearch();
+  if (v === 'cal') renderCal();
+  if (v === 'backup') renderBackup();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  if (b.dataset.view === 'cal') { const d = parseKey(editorDate); calY = d.getFullYear(); calM = d.getMonth(); }
+  showView(b.dataset.view);
+});
+
+/* ---------- write ---------- */
+const editor = $('#editor');
+let editorDate = todayKey();
+let dirty = false, saveTimer = null;
+
+function setStatus(t, err) { const s = $('#status'); s.textContent = t; s.classList.toggle('err', !!err); }
+
+function makeStamp() {
+  const now = new Date();
+  const time = nbsp(now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+  if (editorDate === todayKey()) return `— ${time} —`;
+  const sameYear = parseKey(editorDate).getFullYear() === now.getFullYear();
+  const md = nbsp(now.toLocaleDateString('en-US', sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }));
+  return `— added ${md}, ${time} —`;
+}
+
+function caretToEnd() {
+  const n = editor.value.length;
+  editor.setSelectionRange(n, n);
+  editor.scrollTop = editor.scrollHeight;
+}
+
+function insertStamp() {
+  const t = editor.value;
+  editor.value = t.trim() === '' ? makeStamp() + '\n' : t.replace(/\s+$/, '') + '\n\n' + makeStamp() + '\n';
+  caretToEnd();
+}
+
+// If the last line is a bare timestamp with nothing written after it, drop it.
+function stripTrailingStamp(t) {
+  const lines = t.replace(/\s+$/, '').split('\n');
+  if (lines.length && isStamp(lines[lines.length - 1])) { lines.pop(); return lines.join('\n').replace(/\s+$/, ''); }
+  return t;
+}
+
+editor.addEventListener('focus', () => {
+  document.body.classList.add('editing');
+  if (editor.value.trim() === '') { insertStamp(); }
+});
+editor.addEventListener('blur', () => { document.body.classList.remove('editing'); saveNow(); });
+
+editor.addEventListener('input', () => {
+  dirty = true;
+  setStatus('Saving…');
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ date: editorDate, text: editor.value })); } catch (_) {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 700);
+});
+
+async function saveNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (!dirty) return;
+  dirty = false;
+  const date = editorDate, text = editor.value;
+  try {
+    if (!dbOK) throw new Error('no db');
+    await persistEntry(date, text);
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (d && d.date === date && d.text === text) localStorage.removeItem(DRAFT_KEY);
+    } catch (_) {}
+    if (date === editorDate) setStatus(meaningful(text) ? 'Saved' : '');
+    updateDelBtn();
+  } catch (err) {
+    if (date === editorDate) { dirty = true; setStatus('Not saved — storage problem', true); }
+  }
+}
+
+async function leaveDay() {
+  const cleaned = stripTrailingStamp(editor.value);
+  if (cleaned !== editor.value) {
+    editor.value = cleaned;
+    const stored = entries.has(editorDate) ? entries.get(editorDate).text : '';
+    if (cleaned !== stored) dirty = true;
+  }
+  await saveNow();
+}
+
+async function openDay(k) {
+  const t = todayKey();
+  if (k > t && !entries.has(k)) k = t;          // no writing into the future
+  await leaveDay();
+  editorDate = k;
+  editor.value = entries.has(k) ? entries.get(k).text : '';
+  dirty = false;
+  setStatus('');
+  editor.scrollTop = 0;
+  await showView('write');
+}
+
+function renderDateBar() {
+  const t = todayKey();
+  $('#dlMain').textContent = editorDate === t ? 'Today' : editorDate === addDays(t, -1) ? 'Yesterday' : fmtDate(editorDate, { weekday: 'long' });
+  $('#dlSub').textContent = fmtDate(editorDate, { month: 'short', day: 'numeric', year: 'numeric' });
+  $('#nextDay').disabled = editorDate >= t;
+  $('#todayRow').hidden = editorDate === t;
+  updateDelBtn();
+}
+function updateDelBtn() { $('#delBtn').disabled = !entries.has(editorDate); }
+
+$('#prevDay').onclick = () => openDay(addDays(editorDate, -1));
+$('#nextDay').onclick = () => openDay(addDays(editorDate, 1));
+$('#goToday').onclick = () => openDay(todayKey());
+$('#dateLabel').onclick = () => { const d = parseKey(editorDate); calY = d.getFullYear(); calM = d.getMonth(); showView('cal'); };
+$('#addBtn').addEventListener('mousedown', e => e.preventDefault()); // keep keyboard open
+$('#addBtn').onclick = () => { insertStamp(); editor.focus(); caretToEnd(); };
+$('#delBtn').onclick = async () => {
+  if (!entries.has(editorDate)) return;
+  const ok = await ask('Delete this entry?', `The entry for ${fmtLong(editorDate)} will be removed from this phone. This can't be undone (unless it's in a backup).`,
+    [{ label: 'Delete', value: true, kind: 'danger' }, { label: 'Cancel', value: false }]);
+  if (!ok) return;
+  clearTimeout(saveTimer); dirty = false;
+  try { await DB.del(editorDate); entries.delete(editorDate); } catch (_) { return tell('Could not delete', 'Storage problem — try again.'); }
+  try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
+  editor.value = '';
+  setStatus('Deleted');
+  updateDelBtn();
+};
+
+/* ---------- backup banner ---------- */
+function daysSince(ts) { return Math.floor((Date.now() - ts) / DAY_MS); }
+function agoText(ts) { const n = daysSince(ts); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; }
+function renderBanner() {
+  const b = $('#banner');
+  if (!dbOK) { b.hidden = false; b.className = 'banner warn'; b.textContent = "Storage isn't available here — notes can't be saved. Open the app from your home screen in Chrome."; return; }
+  if (!entries.size) { b.hidden = true; return; }
+  b.hidden = false;
+  if (!lastBackup) { b.className = 'banner warn'; b.textContent = 'Not backed up yet — tap to back up to Drive'; }
+  else if (daysSince(lastBackup) >= 7) { b.className = 'banner warn'; b.textContent = `Last backup: ${agoText(lastBackup)} — tap to back up`; }
+  else { b.className = 'banner'; b.textContent = `Last backup: ${agoText(lastBackup)}`; }
+}
+$('#banner').onclick = () => { if (dbOK) showView('backup'); };
+
+/* ---------- search ---------- */
+function parseQuery(q) {
+  const terms = []; const re = /"([^"]*)"|(\S+)/g; let m;
+  while ((m = re.exec(q))) {
+    const t = (m[1] !== undefined ? m[1] : m[2].replace(/^"+|"+$/g, '')).trim().toLowerCase();
+    if (t && !terms.includes(t)) terms.push(t);
+  }
+  return terms;
+}
+function rangeBounds() {
+  const t = todayKey(), v = $('#range').value;
+  if (v === 'all') return ['0000-00-00', '9999-99-99'];
+  if (v === 'year') return [t.slice(0, 4) + '-01-01', '9999-99-99'];
+  if (v === 'custom') {
+    let f = $('#from').value || '0000-00-00', to = $('#to').value || '9999-99-99';
+    if (f > to) [f, to] = [to, f];
+    return [f, to];
+  }
+  return [addDays(t, -(Number(v) - 1)), '9999-99-99'];
+}
+function clip(line, pos) {
+  const MAX = 160;
+  if (line.length <= MAX) return line;
+  const start = pos < 0 ? 0 : Math.max(0, pos - 50), end = start + MAX;
+  return (start > 0 ? '…' : '') + line.slice(start, end) + (end < line.length ? '…' : '');
+}
+function snippets(body, terms) {
+  const lines = body.split('\n').filter(l => l.trim());
+  if (!terms.length) return lines.slice(0, 2).map(l => clip(l, -1));
+  const out = [];
+  for (const l of lines) {
+    const low = l.toLowerCase(); let pos = -1;
+    for (const t of terms) { const p = low.indexOf(t); if (p >= 0 && (pos < 0 || p < pos)) pos = p; }
+    if (pos >= 0) { out.push(clip(l, pos)); if (out.length === 3) break; }
+  }
+  return out.length ? out : lines.slice(0, 1).map(l => clip(l, -1)); // phrase spanning lines
+}
+function highlight(s, terms) {
+  const low = s.toLowerCase();
+  if (!terms.length || low.length !== s.length) return esc(s);
+  const marks = [];
+  for (const t of terms) { let i = 0; while ((i = low.indexOf(t, i)) >= 0) { marks.push([i, i + t.length]); i += t.length; } }
+  marks.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const m of marks) { const last = merged[merged.length - 1]; if (last && m[0] <= last[1]) last[1] = Math.max(last[1], m[1]); else merged.push(m.slice()); }
+  let out = '', p = 0;
+  for (const [a, b] of merged) { out += esc(s.slice(p, a)) + '<mark>' + esc(s.slice(a, b)) + '</mark>'; p = b; }
+  return out + esc(s.slice(p));
+}
+function runSearch() {
+  const terms = parseQuery($('#q').value);
+  const [fk, tk] = rangeBounds();
+  const hits = [];
+  for (const [k, e] of entries) {
+    if (k < fk || k > tk) continue;
+    const body = contentOf(e.text);
+    const low = body.toLowerCase();
+    if (terms.every(t => low.includes(t))) hits.push([k, body]);
+  }
+  hits.sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const LIMIT = 300;
+  $('#sMeta').textContent = !entries.size ? 'No entries yet.'
+    : terms.length ? (hits.length ? `${plural(hits.length, 'entry').replace('entrys', 'entries')} found` : 'Nothing found.')
+    : `${plural(hits.length, 'entry').replace('entrys', 'entries')}`;
+  $('#results').innerHTML = hits.slice(0, LIMIT).map(([k, body]) =>
+    `<button class="result" data-k="${k}"><div class="rdate">${esc(fmtLong(k))}</div>` +
+    snippets(body, terms).map(l => `<div class="rline">${highlight(l, terms)}</div>`).join('') + '</button>'
+  ).join('') + (hits.length > LIMIT ? `<p class="hint">Showing newest ${LIMIT}. Narrow the date range to see older ones.</p>` : '');
+}
+let sTimer = null;
+$('#q').addEventListener('input', () => { clearTimeout(sTimer); sTimer = setTimeout(runSearch, 200); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); $('#q').blur(); } });
+$('#range').onchange = () => { $('#customRange').hidden = $('#range').value !== 'custom'; runSearch(); };
+$('#from').onchange = runSearch; $('#to').onchange = runSearch;
+$('#results').onclick = e => { const r = e.target.closest('.result'); if (r) openDay(r.dataset.k); };
+
+/* ---------- calendar ---------- */
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+function renderCal() {
+  $('#calTitle').textContent = new Date(calY, calM, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const t = todayKey(), g = $('#calGrid');
+  let html = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div class="calhead">${d}</div>`).join('');
+  const first = new Date(calY, calM, 1).getDay(), days = new Date(calY, calM + 1, 0).getDate();
+  for (let i = 0; i < first; i++) html += '<div></div>';
+  let count = 0;
+  for (let d = 1; d <= days; d++) {
+    const k = `${calY}-${pad(calM + 1)}-${pad(d)}`, has = entries.has(k);
+    if (has) count++;
+    const cls = ['day', has && 'has', k === t && 'today', k === editorDate && 'sel'].filter(Boolean).join(' ');
+    html += `<button class="${cls}" data-k="${k}" ${k > t && !has ? 'disabled' : ''}>${d}<span class="dot"></span></button>`;
+  }
+  g.innerHTML = html;
+  $('#calCount').textContent = count ? `${count} ${count === 1 ? 'entry' : 'entries'} this month` : 'No entries this month';
+  const now = new Date();
+  $('#calNext').disabled = calY > now.getFullYear() || (calY === now.getFullYear() && calM >= now.getMonth());
+}
+$('#calGrid').onclick = e => { const b = e.target.closest('.day'); if (b && !b.disabled) openDay(b.dataset.k); };
+$('#calPrev').onclick = () => { if (--calM < 0) { calM = 11; calY--; } renderCal(); };   // month math without date overflow
+$('#calNext').onclick = () => { if (++calM > 11) { calM = 0; calY++; } renderCal(); };
+$('#calToday').onclick = () => openDay(todayKey());
+
+/* ---------- backup / restore ---------- */
+function stampName(prefix, ext) { return `${prefix}-${todayKey()}.${ext}`; }
+function buildBackup() {
+  const obj = {};
+  [...entries.keys()].sort().forEach(k => { obj[k] = entries.get(k).text; });
+  return JSON.stringify({ format: 'daily-notes-backup', version: 2, exportedAt: new Date().toISOString(), count: entries.size, entries: obj }, null, 2);
+}
+function buildReadable() {
+  const keys = [...entries.keys()].sort();
+  let s = `Daily Notes — exported ${fmtLong(todayKey())} — ${keys.length} entries\n\n`;
+  for (const k of keys) { const h = fmtLong(k); s += `${h}\n${'-'.repeat(h.length)}\n${entries.get(k).text.replace(/\s+$/, '')}\n\n`; }
+  return s;
+}
+function download(name, text, mime) {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+// Share sheet first (lets you pick Drive). Chrome may refuse .json files in the
+// share sheet, so fall back to the same content as .txt, then to a plain download.
+async function shareOrDownload(name, text, mime) {
+  const files = [new File([text], name, { type: mime })];
+  if (mime !== 'text/plain') files.push(new File([text], name.replace(/\.\w+$/, '.txt'), { type: 'text/plain' }));
+  if (navigator.canShare && navigator.share) {
+    for (const f of files) {
+      let can = false; try { can = navigator.canShare({ files: [f] }); } catch (_) {}
+      if (!can) continue;
+      try { await navigator.share({ files: [f], title: f.name }); return 'shared'; }
+      catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; break; }
+    }
+  }
+  download(name, text, mime);
+  return 'downloaded';
+}
+$('#exportBtn').onclick = async () => {
+  await saveNow();
+  if (!entries.size) return tell('Nothing to back up', 'Write an entry first.');
+  const r = await shareOrDownload(stampName('daily-notes-backup', 'json'), buildBackup(), 'application/json');
+  if (r === 'cancelled') return;
+  lastBackup = Date.now();
+  try { await DB.setMeta('lastBackup', lastBackup); } catch (_) {}
+  renderBackup();
+  if (r === 'downloaded') tell('Backup saved', "Saved to your phone's Downloads folder. To keep it safe, upload it to Drive from the Files or Drive app.");
+};
+$('#exportTxtBtn').onclick = async () => {
+  await saveNow();
+  if (!entries.size) return tell('Nothing to export', 'Write an entry first.');
+  const r = await shareOrDownload(stampName('daily-notes', 'txt'), buildReadable(), 'text/plain');
+  if (r === 'downloaded') tell('Exported', "Saved to your phone's Downloads folder.");
+};
+$('#importBtn').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  await saveNow();
+  let data;
+  try { data = JSON.parse(await f.text()); } catch (_) { return tell("Can't restore", "That file isn't a Daily Notes backup."); }
+  const src = data && typeof data === 'object' && data.entries && typeof data.entries === 'object' && !Array.isArray(data.entries) ? data.entries : data;
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return tell("Can't restore", "That file isn't a Daily Notes backup.");
+  const valid = []; let bad = 0;
+  for (const [k, v] of Object.entries(src)) {
+    if (isValidKey(k) && typeof v === 'string') { if (meaningful(v)) valid.push([k, v]); }
+    else if (!['format', 'version', 'exportedAt', 'count'].includes(k)) bad++;
+  }
+  if (!valid.length) return tell("Can't restore", 'No diary entries were found in that file.');
+  const fresh = [], conflicts = []; let same = 0;
+  for (const [k, v] of valid) {
+    if (!entries.has(k)) fresh.push([k, v]);
+    else if (entries.get(k).text === v) same++;
+    else conflicts.push([k, v]);
+  }
+  const summary = `In the file: ${valid.length} days.\n• ${fresh.length} new\n• ${same} already identical` + (conflicts.length ? `\n• ${conflicts.length} different from what's on this phone` : '') + (bad ? `\n• ${bad} unreadable items will be skipped` : '');
+  let mode = 'keep';
+  if (conflicts.length) {
+    mode = await ask('Restore backup', summary + '\n\nFor the days that differ:', [
+      { label: 'Combine both versions', value: 'combine', kind: 'primary' },
+      { label: "Use the backup's version", value: 'backup' },
+      { label: "Keep what's on this phone", value: 'keep' },
+      { label: 'Cancel', value: null }]);
+    if (mode == null) return;
+  } else {
+    if (!fresh.length) return tell('Nothing new', 'Everything in this backup is already here.');
+    const ok = await ask('Restore backup', summary, [{ label: `Add ${plural(fresh.length, 'day')}`, value: true, kind: 'primary' }, { label: 'Cancel', value: false }]);
+    if (!ok) return;
+  }
+  const now = Date.now(), list = fresh.map(([k, v]) => ({ date: k, text: v, updated: now }));
+  let combined = 0, replaced = 0;
+  for (const [k, theirs] of conflicts) {
+    const mine = entries.get(k).text;
+    if (mode === 'backup') { list.push({ date: k, text: theirs, updated: now }); replaced++; }
+    else if (mode === 'combine') {
+      let text;
+      if (mine.includes(theirs.trim())) continue;          // backup is an older copy of this
+      else if (theirs.includes(mine.trim())) text = theirs; // backup has more
+      else text = mine.replace(/\s+$/, '') + '\n\n— from backup —\n' + theirs.replace(/^\s+/, '');
+      list.push({ date: k, text, updated: now }); combined++;
+    }
+  }
+  try { await DB.putMany(list); } catch (_) { return tell('Restore failed', 'Storage problem — nothing was changed. Try again.'); }
+  list.forEach(e => entries.set(e.date, e));
+  requestPersist();
+  if (entries.has(editorDate)) { editor.value = entries.get(editorDate).text; dirty = false; }
+  renderBackup();
+  tell('Restored', `Added ${fresh.length}` + (combined ? `, combined ${combined}` : '') + (replaced ? `, replaced ${replaced}` : '') + '.');
+};
+async function renderBackup() {
+  const st = $('#bkStat');
+  if (!lastBackup) { st.textContent = entries.size ? 'Not backed up yet' : 'No entries yet'; st.className = 'bigstat' + (entries.size ? ' warn' : ''); }
+  else { st.textContent = `Last backup: ${agoText(lastBackup)}`; st.className = 'bigstat' + (daysSince(lastBackup) >= 7 ? ' warn' : ''); }
+  $('#bkInfo').textContent = `${entries.size} ${entries.size === 1 ? 'entry' : 'entries'} on this phone.` + (lastBackup ? ` Last backed up ${nbsp(new Date(lastBackup).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}.` : '');
+  let p = null; try { p = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch (_) {}
+  $('#storeInfo').textContent = "Only on this phone, inside Chrome. Clearing Chrome's data or uninstalling Chrome deletes them — that's what backups are for." +
+    (p === true ? ' Protected storage: on (Chrome won\'t auto-clear it).' : p === false ? ' Protected storage: not granted yet — it usually turns on after you add the app to your home screen.' : '');
+}
+
+/* ---------- lifecycle ---------- */
+let lastToday = todayKey();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { saveNow(); return; }
+  const t = todayKey();
+  if (t !== lastToday) {                       // app reopened after midnight
+    const wasToday = editorDate === lastToday;
+    lastToday = t;
+    if (view === 'write' && wasToday && document.activeElement !== editor && !meaningful(editor.value)) openDay(t);
+    else if (view === 'write') renderDateBar();
+  }
+  if (view === 'write') renderBanner();
+});
+window.addEventListener('pagehide', () => { saveNow(); });
+
+async function start() {
+  try {
+    await DB.open();
+    (await DB.all()).forEach(e => entries.set(e.date, e));
+    dbOK = true;
+  } catch (_) { dbOK = false; }
+
+  if (dbOK) {
+    // Restore any keystrokes that hadn't reached the database (e.g. app killed mid-save)
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (d && isValidKey(d.date) && typeof d.text === 'string') {
+        const stored = entries.has(d.date) ? entries.get(d.date).text : '';
+        if (d.text !== stored) await persistEntry(d.date, d.text);
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch (_) {}
+    // One-time pickup of notes from the old Daily Notes Calendar (same storage key), if any
+    try {
+      if (!(await DB.getMeta('migratedOld'))) {
+        const old = JSON.parse(localStorage.getItem('dailyNotes') || 'null');
+        if (old && typeof old === 'object') {
+          const list = Object.entries(old).filter(([k, v]) => isValidKey(k) && typeof v === 'string' && meaningful(v) && !entries.has(k))
+            .map(([k, v]) => ({ date: k, text: v, updated: Date.now() }));
+          if (list.length) { await DB.putMany(list); list.forEach(e => entries.set(e.date, e)); }
+        }
+        await DB.setMeta('migratedOld', true);
+      }
+    } catch (_) {}
+    try { lastBackup = (await DB.getMeta('lastBackup')) || null; } catch (_) {}
+  }
+
+  editorDate = todayKey();
+  editor.value = entries.has(editorDate) ? entries.get(editorDate).text : '';
+  renderDateBar(); renderBanner();
+
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+start();
+</script>
+</body>
+</html>
