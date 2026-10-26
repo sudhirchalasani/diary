@@ -3,200 +3,253 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta name="theme-color" content="#2f6f62">
+<meta name="theme-color" content="#667eea">
 <title>Daily Notes</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#f6f3ee; --surface:#ffffff; --ink:#2a2622; --muted:#776f67; --line:#e4ded5;
-  --accent:#2f6f62; --accent-ink:#ffffff; --accent-soft:#e3efeb;
-  --warn:#9a5212; --warn-soft:#fbecd8; --danger:#b3261e; --mark:#ffe58f;
+  --blue:#4facfe; --blue-dark:#357abd; --cyan:#00f2fe; --purple1:#667eea; --purple2:#764ba2;
+  --ink:#2b2d42; --muted:#6c757d; --line:#e3e6ee; --soft:#f4f6fb;
+  --has-bg:#e8f4fd; --match:#ff6b6b; --match-bg:#ffe0e0;
+  --green:#28a745; --danger:#f44336; --mark:#ffe58f;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);font-size:16px;line-height:1.4;
+  background:linear-gradient(135deg,var(--purple1) 0%,var(--purple2) 100%) fixed;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:none;border:none;cursor:pointer}
 button:disabled{opacity:.35;cursor:default}
 [hidden]{display:none!important}
 
-#app{display:flex;flex-direction:column;height:100dvh;max-width:720px;margin:0 auto;padding-top:env(safe-area-inset-top)}
-main{flex:1;min-height:0;display:flex;flex-direction:column}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:720px;margin:0 auto;padding:env(safe-area-inset-top) 8px 0}
+.apphead{background:linear-gradient(135deg,var(--blue) 0%,var(--cyan) 100%);color:#fff;border-radius:16px 16px 0 0;margin-top:8px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 20px rgba(0,0,0,.12)}
+.apphead h1{font-size:1.25rem;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.apphead small{font-size:.8rem;opacity:.95}
+main{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,.12)}
 .view{display:none;flex:1;min-height:0;flex-direction:column}
 .view.active{display:flex}
-.scroll{overflow-y:auto;flex:1;min-height:0;padding:4px 16px 24px}
-h2{font-size:1.15rem;font-weight:650;padding:14px 16px 6px}
+.scroll{overflow-y:auto;flex:1;min-height:0;padding:4px 14px 20px}
 
-.btn{min-height:44px;padding:0 18px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:550}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.wide{width:100%;margin-top:10px}
-.textbtn{min-height:44px;padding:0 10px;color:var(--muted);font-weight:550}
-.textbtn.danger{color:var(--danger)}
-.chip{min-height:36px;padding:0 14px;border-radius:18px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:.9rem}
-.iconbtn{width:48px;height:48px;border-radius:24px;font-size:1.8rem;line-height:1;color:var(--accent)}
-.iconbtn:active,.btn:active,.chip:active{filter:brightness(.92)}
+/* buttons (colors from the original app) */
+.pill{min-height:42px;padding:0 16px;border-radius:22px;color:#fff;font-weight:600;font-size:.95rem;transition:transform .15s,filter .15s;white-space:nowrap}
+.pill:active{transform:translateY(1px);filter:brightness(.92)}
+.pill.blue{background:var(--blue)} .pill.red{background:var(--match)} .pill.green{background:var(--green)}
+.pill.gray{background:#6c757d} .pill.danger{background:var(--danger)} .pill.light{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.pill.wide{width:100%;margin-top:10px}
+.roundnav{width:44px;height:44px;border-radius:22px;background:var(--blue);color:#fff;font-size:1.4rem;line-height:1;flex:none}
+.chip{min-height:34px;padding:0 14px;border-radius:17px;background:var(--has-bg);color:var(--blue-dark);font-weight:600;font-size:.88rem}
 
 /* backup banner */
-.banner{margin:10px 16px 0;padding:9px 12px;border-radius:10px;text-align:left;font-size:.88rem;background:var(--accent-soft);color:var(--accent)}
-.banner.warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.banner{margin:10px 14px 0;padding:9px 12px;border-radius:10px;text-align:left;font-size:.88rem;background:var(--has-bg);color:var(--blue-dark)}
+.banner.warn{background:#fff3cd;color:#8a5a00;font-weight:600}
 
-/* write view */
-.datebar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 0}
-.datelabel{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px 0;border-radius:12px}
+/* write (day view) */
+.datebar{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
+.datelabel{flex:1;display:flex;flex-direction:column;align-items:center;padding:2px 0;border-radius:12px}
 #dlMain{font-size:1.25rem;font-weight:700}
 #dlSub{font-size:.85rem;color:var(--muted)}
-.todayrow{display:flex;justify-content:center;padding:2px 0 4px}
-#editor{flex:1;min-height:0;margin:8px 16px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-size:17px;line-height:1.55;resize:none;outline:none}
-#editor:focus{border-color:var(--accent)}
-.editfoot{display:flex;align-items:center;gap:6px;padding:8px 16px 10px}
-.status{flex:1;font-size:.85rem;color:var(--muted)}
-.status.err{color:var(--danger);font-weight:600}
+.todayrow{display:flex;justify-content:center;padding:4px 0 0}
+#editor{flex:1;min-height:0;margin:10px 14px 0;padding:14px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:17px;line-height:1.55;resize:none;outline:none}
+#editor:focus{border-color:var(--blue)}
+.editfoot{display:flex;align-items:center;gap:8px;padding:10px 14px}
+.status{flex:1;font-size:.88rem;color:var(--muted)}
+.status.ok{color:var(--green);font-weight:600}
+.status.err{color:var(--danger);font-weight:700}
 
-/* search view */
-.searchbar{padding:12px 16px 6px;display:flex;flex-direction:column;gap:8px}
-#q{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:17px;outline:none}
-#q:focus{border-color:var(--accent)}
-select,input[type=date]{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+/* search */
+.searchbar{padding:12px 14px 4px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center}
+.row > *{flex:1}
+#q{min-height:46px;padding:0 16px;border:2px solid var(--line);border-radius:23px;background:#fff;font-size:17px;outline:none;width:100%}
+#q:focus,select:focus,input[type=date]:focus{border-color:var(--blue);outline:none}
+select,input[type=date]{min-height:42px;padding:0 12px;border:2px solid var(--line);border-radius:21px;background:#fff;width:100%}
+.lbl{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:2px;display:block}
 .customrange{display:flex;gap:8px}
-.customrange label{flex:1;display:flex;flex-direction:column;font-size:.8rem;color:var(--muted);gap:2px}
-.customrange input{width:100%;color:var(--ink)}
-.hint{font-size:.85rem;color:var(--muted);padding:2px 0 8px}
-.meta{font-size:.9rem;font-weight:600;padding:4px 0 8px}
-.result{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.result .rdate{font-weight:650;font-size:.92rem;color:var(--accent);margin-bottom:3px}
-.result .rline{font-size:.95rem;overflow-wrap:anywhere}
+.customrange label{flex:1}
+.hint{font-size:.84rem;color:var(--muted);padding:2px 0 8px}
+.meta{font-size:.95rem;font-weight:700;padding:4px 0 8px}
+.result{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.result:active{background:var(--has-bg)}
+.result .rdate{font-weight:700;font-size:.92rem;margin-bottom:3px}
+.result .rline{font-size:.95rem;color:#444;overflow-wrap:anywhere}
 .result .rline+.rline{margin-top:4px;padding-top:4px;border-top:1px dashed var(--line)}
 mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
-/* calendar view */
-.calnav{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 0}
-#calTitle{font-size:1.15rem;font-weight:700}
-.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:8px 12px}
-.calhead{text-align:center;font-size:.78rem;color:var(--muted);font-weight:600;padding:4px 0}
-.day{aspect-ratio:1/1;max-height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:550;width:100%}
-.day .dot{width:6px;height:6px;border-radius:3px;background:transparent}
-.day.has .dot{background:var(--accent)}
-.day.today{border:2px solid var(--accent)}
-.day.sel{background:var(--accent);color:var(--accent-ink)}
-.day.sel.has .dot{background:var(--accent-ink)}
-.day:disabled{background:transparent;border-color:transparent}
-.calfoot{display:flex;align-items:center;justify-content:space-between;padding:4px 16px;font-size:.9rem;color:var(--muted)}
+/* calendar */
+.caltop{display:flex;gap:8px;padding:10px 14px 0;justify-content:center}
+.seg{min-height:38px;padding:0 16px;border-radius:19px;background:#6c757d;color:#fff;font-weight:600;font-size:.92rem}
+.seg.on{background:var(--blue)}
+.calnav{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
+#calTitle{flex:1;text-align:center;font-size:1.08rem;font-weight:700}
+.matchnote{margin:8px 14px 0;padding:6px 10px;border-radius:8px;background:var(--match-bg);color:#b3261e;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.matchnote button{color:#b3261e;font-weight:700;text-decoration:underline}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#e0e0e0;border-radius:10px;overflow:hidden;margin:10px 10px 0}
+.mhead{background:#333;color:#fff;text-align:center;font-size:.75rem;font-weight:700;padding:6px 0}
+.mday{background:#fff;min-height:64px;padding:4px 3px;display:flex;flex-direction:column;align-items:stretch;text-align:left;border:2px solid transparent;overflow:hidden}
+.mday .n{font-weight:700;font-size:.9rem}
+.mday .pv{font-size:.62rem;line-height:1.15;color:#555;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.mday.has{background:var(--has-bg);border-color:var(--blue)}
+.mday.match{background:var(--match-bg);border-color:var(--match)}
+.mday.today .n{color:#fff;background:var(--purple1);border-radius:10px;padding:0 6px;align-self:flex-start}
+.mday.sel{box-shadow:inset 0 0 0 2px var(--purple2)}
+.mday.other{background:#f5f5f5;color:#bbb}
+.mday:disabled{opacity:1;color:#c4c4c4}
+.strip{margin:10px 10px 0;padding:10px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.strip .sd{font-weight:700;margin-bottom:4px}
+.strip .sp{font-size:.92rem;color:#444;white-space:pre-wrap;overflow-wrap:anywhere;max-height:7.5em;overflow:hidden}
+.strip .sa{display:flex;justify-content:flex-end;margin-top:8px}
+.wlist{padding:10px 10px 0;display:flex;flex-direction:column;gap:6px}
+.wrow{display:flex;gap:10px;text-align:left;background:#fff;border:2px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;align-items:flex-start}
+.wrow .wd{width:46px;flex:none;text-align:center}
+.wrow .wd b{display:block;font-size:1.25rem;line-height:1.1}
+.wrow .wd span{font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.wrow .wp{flex:1;font-size:.9rem;color:#444;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:anywhere;padding-top:2px}
+.wrow .wp.empty{color:#aaa;font-style:italic}
+.wrow.has{background:var(--has-bg);border-color:var(--blue)}
+.wrow.match{background:var(--match-bg);border-color:var(--match)}
+.wrow.today .wd b{color:var(--purple1)}
+.wrow:disabled{opacity:.45}
+.calfoot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:.9rem;color:var(--muted)}
 
-/* backup view */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+/* backup */
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
 .card h3{font-size:1rem;margin-bottom:4px}
 .card p{font-size:.9rem;color:var(--muted)}
 .card p strong{color:var(--ink)}
-.bigstat{font-size:1.05rem;font-weight:650;margin-bottom:2px}
-.bigstat.warn{color:var(--warn)}
+.bigstat{font-size:1.05rem;font-weight:700;margin-bottom:2px}
+.bigstat.warn{color:#8a5a00}
+h2{font-size:1.15rem;font-weight:700;padding:14px 14px 8px}
 
 /* bottom nav */
-nav{display:flex;border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.75rem;color:var(--muted);font-weight:600}
-nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-nav button.on{color:var(--accent)}
+nav{display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);margin-bottom:0}
+nav button{flex:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:.74rem;color:var(--muted);font-weight:700}
+nav button .ic{font-size:1.3rem;line-height:1.1;filter:grayscale(.6);opacity:.75}
+nav button.on{color:var(--purple1)}
+nav button.on .ic{filter:none;opacity:1}
 
 /* dialog */
-.overlay{position:fixed;inset:0;background:rgba(20,16,12,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:16px}
-.sheet{background:var(--surface);border-radius:18px;padding:18px;width:100%;max-width:480px;margin-bottom:env(safe-area-inset-bottom)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:16px}
+.sheet{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:480px;margin-bottom:env(safe-area-inset-bottom)}
 .sheet h3{font-size:1.1rem;margin-bottom:6px}
 .sheet p{color:var(--muted);font-size:.95rem;white-space:pre-line;margin-bottom:14px}
 .sheet .btns{display:flex;flex-direction:column;gap:8px}
-.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.sheet .btns .pill{width:100%}
 </style>
 </head>
 <body>
 <div id="app">
+<header class="apphead"><h1>📅 Daily Notes</h1><small id="headCount"></small></header>
 <main>
 
-  <!-- WRITE -->
+  <!-- WRITE (day view) -->
   <section id="v-write" class="view active">
     <button id="banner" class="banner" hidden></button>
     <div class="datebar">
-      <button id="prevDay" class="iconbtn" aria-label="Previous day">‹</button>
+      <button id="prevDay" class="roundnav" aria-label="Previous day">‹</button>
       <button id="dateLabel" class="datelabel" aria-label="Open calendar"><span id="dlMain"></span><span id="dlSub"></span></button>
-      <button id="nextDay" class="iconbtn" aria-label="Next day">›</button>
+      <button id="nextDay" class="roundnav" aria-label="Next day">›</button>
     </div>
-    <div id="todayRow" class="todayrow" hidden><button id="goToday" class="chip">Back to today</button></div>
-    <textarea id="editor" placeholder="Tap here to write…" spellcheck="true" autocapitalize="sentences" aria-label="Diary entry"></textarea>
+    <div id="todayRow" class="todayrow" hidden><button id="goToday" class="chip">⤴ Back to today</button></div>
+    <textarea id="editor" placeholder="Tap here to write your daily note…" spellcheck="true" autocapitalize="sentences" aria-label="Diary entry"></textarea>
     <div class="editfoot">
       <span id="status" class="status"></span>
-      <button id="delBtn" class="textbtn danger">Delete</button>
-      <button id="addBtn" class="btn primary">+ Add entry</button>
+      <button id="delBtn" class="pill danger">🗑️ Delete</button>
+      <button id="addBtn" class="pill blue">➕ Add entry</button>
     </div>
   </section>
 
   <!-- SEARCH -->
   <section id="v-search" class="view">
     <div class="searchbar">
-      <input id="q" type="search" placeholder="Search your notes" enterkeyhint="search" autocomplete="off" aria-label="Search">
-      <select id="range" aria-label="Date range">
-        <option value="all">All time</option>
-        <option value="30">Last 30 days</option>
-        <option value="90">Last 3 months</option>
-        <option value="365">Last 12 months</option>
-        <option value="year">This year</option>
-        <option value="custom">Custom dates…</option>
-      </select>
+      <input id="q" type="search" placeholder="Search your notes…" enterkeyhint="search" autocomplete="off" aria-label="Search">
+      <div class="row">
+        <button id="searchBtn" class="pill red">🔍 Search</button>
+        <button id="clearBtn" class="pill gray">Clear</button>
+        <button id="allBtn" class="pill blue">📋 Show all</button>
+      </div>
+      <div class="row">
+        <label><span class="lbl">Date range</span>
+          <select id="range">
+            <option value="all">All time</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 3 months</option>
+            <option value="365">Last 12 months</option>
+            <option value="year">This year</option>
+            <option value="custom">Custom dates…</option>
+          </select></label>
+        <label><span class="lbl">📆 Go to a date</span><input type="date" id="gotoDate" aria-label="Go to date"></label>
+      </div>
       <div id="customRange" class="customrange" hidden>
-        <label>From<input type="date" id="from"></label>
-        <label>To<input type="date" id="to"></label>
+        <label><span class="lbl">From</span><input type="date" id="from"></label>
+        <label><span class="lbl">To</span><input type="date" id="to"></label>
       </div>
     </div>
     <div class="scroll">
-      <p class="hint">Words match in any order. Use "quotes" for an exact phrase. #tags work too.</p>
+      <p class="hint">Words match in any order. Use "quotes" for an exact phrase. #tags work too. Matching days are outlined red on the calendar.</p>
       <div id="sMeta" class="meta"></div>
       <div id="results"></div>
     </div>
   </section>
 
-  <!-- CALENDAR -->
+  <!-- CALENDAR (month / week) -->
   <section id="v-cal" class="view">
-    <div class="calnav">
-      <button id="calPrev" class="iconbtn" aria-label="Previous month">‹</button>
-      <span id="calTitle"></span>
-      <button id="calNext" class="iconbtn" aria-label="Next month">›</button>
+    <div class="scroll" style="padding:0 0 10px">
+      <div class="caltop">
+        <button class="seg on" data-mode="month">📅 Month</button>
+        <button class="seg" data-mode="week">📊 Week</button>
+      </div>
+      <div class="calnav">
+        <button id="calPrev" class="roundnav" aria-label="Previous">‹</button>
+        <span id="calTitle"></span>
+        <button id="calNext" class="roundnav" aria-label="Next">›</button>
+      </div>
+      <div id="matchNote" class="matchnote" hidden><span id="matchText"></span><button id="matchClear">Clear</button></div>
+      <div id="calBody"></div>
+      <div id="strip" class="strip" hidden>
+        <div class="sd" id="stripDate"></div>
+        <div class="sp" id="stripText"></div>
+        <div class="sa"><button id="stripOpen" class="pill blue">✏️ Open</button></div>
+      </div>
+      <div class="calfoot"><span id="calCount"></span><button id="calToday" class="chip">📍 Today</button></div>
     </div>
-    <div id="calGrid" class="calgrid"></div>
-    <div class="calfoot"><span id="calCount"></span><button id="calToday" class="chip">Today</button></div>
   </section>
 
   <!-- BACKUP -->
   <section id="v-backup" class="view">
-    <h2>Backup</h2>
+    <h2>💾 Backup &amp; restore</h2>
     <div class="scroll">
       <div class="card">
         <div id="bkStat" class="bigstat"></div>
         <p id="bkInfo"></p>
-        <button id="exportBtn" class="btn primary wide">Back up now</button>
-        <p style="margin-top:8px">Opens the share menu. Choose <strong>Drive</strong> to save it there.</p>
+        <button id="exportBtn" class="pill green wide">📤 Export backup</button>
+        <p style="margin-top:8px">Opens the share menu — choose <strong>Drive</strong> to save it there.</p>
       </div>
       <div class="card">
-        <h3>Restore</h3>
-        <p>Load a backup file (from Drive or your phone). You'll be asked before anything is replaced.</p>
+        <h3>📥 Import (restore)</h3>
+        <p>Load a backup file from Drive or your phone. You'll be asked before anything is replaced.</p>
         <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
-        <button id="importBtn" class="btn wide">Restore from backup…</button>
+        <button id="importBtn" class="pill green wide">📥 Import backup</button>
       </div>
       <div class="card">
-        <h3>Readable copy</h3>
-        <p>All entries as a plain text file you can read anywhere. Can't be restored from — use "Back up now" for that.</p>
-        <button id="exportTxtBtn" class="btn wide">Export as text</button>
+        <h3>📄 Readable copy</h3>
+        <p>All entries as a plain text file you can read anywhere. Can't be imported back — use Export backup for that.</p>
+        <button id="exportTxtBtn" class="pill light wide">📄 Export as text</button>
       </div>
       <div class="card">
-        <h3>Where your notes live</h3>
-        <p id="storeInfo">Only on this phone, inside Chrome. Clearing Chrome's data or uninstalling Chrome deletes them — that's what backups are for.</p>
+        <h3>🔒 Where your notes live</h3>
+        <p id="storeInfo"></p>
       </div>
     </div>
   </section>
 
 </main>
-
 <nav>
-  <button data-view="write" class="on"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Write</button>
-  <button data-view="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button>
-  <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendar</button>
-  <button data-view="backup"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Backup</button>
+  <button data-view="write" class="on"><span class="ic">✏️</span>Write</button>
+  <button data-view="search"><span class="ic">🔍</span>Search</button>
+  <button data-view="cal"><span class="ic">📅</span>Calendar</button>
+  <button data-view="backup"><span class="ic">💾</span>Backup</button>
 </nav>
 </div>
 
@@ -219,18 +272,20 @@ const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate(
 const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }; // local time, never UTC
 const todayKey = () => keyOf(new Date());
 const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const weekStartOf = k => addDays(k, -parseKey(k).getDay()); // Sunday
 const isValidKey = k => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k) && keyOf(parseKey(k)) === k;
 const fmtDate = (k, o) => parseKey(k).toLocaleDateString('en-US', o);
 const fmtLong = k => fmtDate(k, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nbsp = s => s.replace(/[  ]/g, ' ');
-const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const nEntries = n => `${n} ${n === 1 ? 'entry' : 'entries'}`;
 
 // Timestamp lines the app writes, e.g. "— 9:40 PM —" or "— added Oct 27, 9:40 PM —"
 const STAMP_RE = /^— (?:(?:added [A-Z][a-z]{2} \d{1,2}(?:, \d{4})?, )?\d{1,2}:\d{2} [AP]M|from backup) —$/;
 const isStamp = line => STAMP_RE.test(line.trim());
 const contentOf = text => (text || '').split('\n').filter(l => !isStamp(l)).join('\n');
 const meaningful = text => contentOf(text).trim().length > 0;
+const previewOf = (k, max) => { const e = entries.get(k); if (!e) return ''; const s = contentOf(e.text).replace(/\s+/g, ' ').trim(); return s.length > max ? s.slice(0, max) + '…' : s; };
 
 /* ---------- database (IndexedDB) ---------- */
 const DB = {
@@ -278,6 +333,7 @@ async function persistEntry(date, text) {
     await DB.del(date);
     entries.delete(date);
   }
+  renderHeadCount();
 }
 
 let persistAsked = false;
@@ -286,6 +342,7 @@ function requestPersist() {
   persistAsked = true;
   navigator.storage.persisted().then(p => p || navigator.storage.persist()).catch(() => {});
 }
+function renderHeadCount() { $('#headCount').textContent = entries.size ? nEntries(entries.size) : ''; }
 
 /* ---------- dialog ---------- */
 function ask(title, msg, buttons) {
@@ -295,7 +352,7 @@ function ask(title, msg, buttons) {
     const box = $('#dlgBtns'); box.innerHTML = '';
     buttons.forEach(b => {
       const el = document.createElement('button');
-      el.className = 'btn ' + (b.kind || '');
+      el.className = 'pill ' + (b.kind || 'light');
       el.textContent = b.label;
       el.onclick = () => { $('#dlg').hidden = true; res(b.value); };
       box.appendChild(el);
@@ -303,7 +360,7 @@ function ask(title, msg, buttons) {
     $('#dlg').hidden = false;
   });
 }
-const tell = (title, msg) => ask(title, msg, [{ label: 'OK', value: true, kind: 'primary' }]);
+const tell = (title, msg) => ask(title, msg, [{ label: 'OK', value: true, kind: 'blue' }]);
 
 /* ---------- views ---------- */
 let view = 'write';
@@ -317,17 +374,18 @@ async function showView(v) {
   if (v === 'cal') renderCal();
   if (v === 'backup') renderBackup();
 }
+function gotoCalendarAt(k) { calAnchor = k; selDay = null; showView('cal'); }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
-  if (b.dataset.view === 'cal') { const d = parseKey(editorDate); calY = d.getFullYear(); calM = d.getMonth(); }
+  if (b.dataset.view === 'cal') return gotoCalendarAt(editorDate);
   showView(b.dataset.view);
 });
 
-/* ---------- write ---------- */
+/* ---------- write (day view) ---------- */
 const editor = $('#editor');
 let editorDate = todayKey();
 let dirty = false, saveTimer = null;
 
-function setStatus(t, err) { const s = $('#status'); s.textContent = t; s.classList.toggle('err', !!err); }
+function setStatus(t, cls) { const s = $('#status'); s.textContent = t; s.className = 'status' + (cls ? ' ' + cls : ''); }
 
 function makeStamp() {
   const now = new Date();
@@ -337,19 +395,12 @@ function makeStamp() {
   const md = nbsp(now.toLocaleDateString('en-US', sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }));
   return `— added ${md}, ${time} —`;
 }
-
-function caretToEnd() {
-  const n = editor.value.length;
-  editor.setSelectionRange(n, n);
-  editor.scrollTop = editor.scrollHeight;
-}
-
+function caretToEnd() { const n = editor.value.length; editor.setSelectionRange(n, n); editor.scrollTop = editor.scrollHeight; }
 function insertStamp() {
   const t = editor.value;
   editor.value = t.trim() === '' ? makeStamp() + '\n' : t.replace(/\s+$/, '') + '\n\n' + makeStamp() + '\n';
   caretToEnd();
 }
-
 // If the last line is a bare timestamp with nothing written after it, drop it.
 function stripTrailingStamp(t) {
   const lines = t.replace(/\s+$/, '').split('\n');
@@ -357,12 +408,8 @@ function stripTrailingStamp(t) {
   return t;
 }
 
-editor.addEventListener('focus', () => {
-  document.body.classList.add('editing');
-  if (editor.value.trim() === '') { insertStamp(); }
-});
-editor.addEventListener('blur', () => { document.body.classList.remove('editing'); saveNow(); });
-
+editor.addEventListener('focus', () => { if (editor.value.trim() === '') insertStamp(); });
+editor.addEventListener('blur', () => { saveNow(); });
 editor.addEventListener('input', () => {
   dirty = true;
   setStatus('Saving…');
@@ -383,13 +430,12 @@ async function saveNow() {
       const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
       if (d && d.date === date && d.text === text) localStorage.removeItem(DRAFT_KEY);
     } catch (_) {}
-    if (date === editorDate) setStatus(meaningful(text) ? 'Saved' : '');
+    if (date === editorDate) setStatus(meaningful(text) ? '✓ Saved' : '', 'ok');
     updateDelBtn();
   } catch (err) {
-    if (date === editorDate) { dirty = true; setStatus('Not saved — storage problem', true); }
+    if (date === editorDate) { dirty = true; setStatus('⚠ Not saved — storage problem', 'err'); }
   }
 }
-
 async function leaveDay() {
   const cleaned = stripTrailingStamp(editor.value);
   if (cleaned !== editor.value) {
@@ -399,7 +445,6 @@ async function leaveDay() {
   }
   await saveNow();
 }
-
 async function openDay(k) {
   const t = todayKey();
   if (k > t && !entries.has(k)) k = t;          // no writing into the future
@@ -411,11 +456,10 @@ async function openDay(k) {
   editor.scrollTop = 0;
   await showView('write');
 }
-
 function renderDateBar() {
   const t = todayKey();
   $('#dlMain').textContent = editorDate === t ? 'Today' : editorDate === addDays(t, -1) ? 'Yesterday' : fmtDate(editorDate, { weekday: 'long' });
-  $('#dlSub').textContent = fmtDate(editorDate, { month: 'short', day: 'numeric', year: 'numeric' });
+  $('#dlSub').textContent = fmtDate(editorDate, { month: 'long', day: 'numeric', year: 'numeric' });
   $('#nextDay').disabled = editorDate >= t;
   $('#todayRow').hidden = editorDate === t;
   updateDelBtn();
@@ -425,12 +469,12 @@ function updateDelBtn() { $('#delBtn').disabled = !entries.has(editorDate); }
 $('#prevDay').onclick = () => openDay(addDays(editorDate, -1));
 $('#nextDay').onclick = () => openDay(addDays(editorDate, 1));
 $('#goToday').onclick = () => openDay(todayKey());
-$('#dateLabel').onclick = () => { const d = parseKey(editorDate); calY = d.getFullYear(); calM = d.getMonth(); showView('cal'); };
+$('#dateLabel').onclick = () => gotoCalendarAt(editorDate);
 $('#addBtn').addEventListener('mousedown', e => e.preventDefault()); // keep keyboard open
 $('#addBtn').onclick = () => { insertStamp(); editor.focus(); caretToEnd(); };
 $('#delBtn').onclick = async () => {
   if (!entries.has(editorDate)) return;
-  const ok = await ask('Delete this entry?', `The entry for ${fmtLong(editorDate)} will be removed from this phone. This can't be undone (unless it's in a backup).`,
+  const ok = await ask('🗑️ Delete this entry?', `The entry for ${fmtLong(editorDate)} will be removed from this phone. This can't be undone (unless it's in a backup).`,
     [{ label: 'Delete', value: true, kind: 'danger' }, { label: 'Cancel', value: false }]);
   if (!ok) return;
   clearTimeout(saveTimer); dirty = false;
@@ -438,7 +482,7 @@ $('#delBtn').onclick = async () => {
   try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
   editor.value = '';
   setStatus('Deleted');
-  updateDelBtn();
+  updateDelBtn(); renderHeadCount();
 };
 
 /* ---------- backup banner ---------- */
@@ -446,16 +490,18 @@ function daysSince(ts) { return Math.floor((Date.now() - ts) / DAY_MS); }
 function agoText(ts) { const n = daysSince(ts); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; }
 function renderBanner() {
   const b = $('#banner');
-  if (!dbOK) { b.hidden = false; b.className = 'banner warn'; b.textContent = "Storage isn't available here — notes can't be saved. Open the app from your home screen in Chrome."; return; }
+  if (!dbOK) { b.hidden = false; b.className = 'banner warn'; b.textContent = "⚠ Storage isn't available here — notes can't be saved. Open the app from your home screen in Chrome."; return; }
   if (!entries.size) { b.hidden = true; return; }
   b.hidden = false;
-  if (!lastBackup) { b.className = 'banner warn'; b.textContent = 'Not backed up yet — tap to back up to Drive'; }
-  else if (daysSince(lastBackup) >= 7) { b.className = 'banner warn'; b.textContent = `Last backup: ${agoText(lastBackup)} — tap to back up`; }
-  else { b.className = 'banner'; b.textContent = `Last backup: ${agoText(lastBackup)}`; }
+  if (!lastBackup) { b.className = 'banner warn'; b.textContent = '⚠ Not backed up yet — tap to back up to Drive'; }
+  else if (daysSince(lastBackup) >= 7) { b.className = 'banner warn'; b.textContent = `⚠ Last backup: ${agoText(lastBackup)} — tap to back up`; }
+  else { b.className = 'banner'; b.textContent = `💾 Last backup: ${agoText(lastBackup)}`; }
 }
 $('#banner').onclick = () => { if (dbOK) showView('backup'); };
 
 /* ---------- search ---------- */
+let searchHits = new Set();   // days matching the last word search (outlined on the calendar)
+let lastTerms = [];
 function parseQuery(q) {
   const terms = []; const re = /"([^"]*)"|(\S+)/g; let m;
   while ((m = re.exec(q))) {
@@ -490,7 +536,7 @@ function snippets(body, terms) {
     for (const t of terms) { const p = low.indexOf(t); if (p >= 0 && (pos < 0 || p < pos)) pos = p; }
     if (pos >= 0) { out.push(clip(l, pos)); if (out.length === 3) break; }
   }
-  return out.length ? out : lines.slice(0, 1).map(l => clip(l, -1)); // phrase spanning lines
+  return out.length ? out : lines.slice(0, 1).map(l => clip(l, -1));
 }
 function highlight(s, terms) {
   const low = s.toLowerCase();
@@ -510,51 +556,123 @@ function runSearch() {
   const hits = [];
   for (const [k, e] of entries) {
     if (k < fk || k > tk) continue;
-    const body = contentOf(e.text);
-    const low = body.toLowerCase();
+    const body = contentOf(e.text), low = body.toLowerCase();
     if (terms.every(t => low.includes(t))) hits.push([k, body]);
   }
   hits.sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  lastTerms = terms;
+  searchHits = new Set(terms.length ? hits.map(h => h[0]) : []);
   const LIMIT = 300;
   $('#sMeta').textContent = !entries.size ? 'No entries yet.'
-    : terms.length ? (hits.length ? `${plural(hits.length, 'entry').replace('entrys', 'entries')} found` : 'Nothing found.')
-    : `${plural(hits.length, 'entry').replace('entrys', 'entries')}`;
+    : terms.length ? (hits.length ? `Found ${nEntries(hits.length)} for “${$('#q').value.trim()}”` : `No notes found for “${$('#q').value.trim()}”`)
+    : `📋 All notes — ${nEntries(hits.length)}`;
   $('#results').innerHTML = hits.slice(0, LIMIT).map(([k, body]) =>
     `<button class="result" data-k="${k}"><div class="rdate">${esc(fmtLong(k))}</div>` +
     snippets(body, terms).map(l => `<div class="rline">${highlight(l, terms)}</div>`).join('') + '</button>'
   ).join('') + (hits.length > LIMIT ? `<p class="hint">Showing newest ${LIMIT}. Narrow the date range to see older ones.</p>` : '');
 }
+function clearSearch() { $('#q').value = ''; searchHits = new Set(); lastTerms = []; runSearch(); }
 let sTimer = null;
 $('#q').addEventListener('input', () => { clearTimeout(sTimer); sTimer = setTimeout(runSearch, 200); });
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); $('#q').blur(); } });
+$('#searchBtn').onclick = () => { runSearch(); $('#q').blur(); };
+$('#clearBtn').onclick = clearSearch;
+$('#allBtn').onclick = () => { $('#q').value = ''; $('#range').value = 'all'; $('#customRange').hidden = true; runSearch(); };
 $('#range').onchange = () => { $('#customRange').hidden = $('#range').value !== 'custom'; runSearch(); };
 $('#from').onchange = runSearch; $('#to').onchange = runSearch;
+$('#gotoDate').onchange = e => { const k = e.target.value; e.target.value = ''; if (isValidKey(k)) openDay(k); };
 $('#results').onclick = e => { const r = e.target.closest('.result'); if (r) openDay(r.dataset.k); };
 
-/* ---------- calendar ---------- */
-let calY = new Date().getFullYear(), calM = new Date().getMonth();
-function renderCal() {
-  $('#calTitle').textContent = new Date(calY, calM, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const t = todayKey(), g = $('#calGrid');
-  let html = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div class="calhead">${d}</div>`).join('');
-  const first = new Date(calY, calM, 1).getDay(), days = new Date(calY, calM + 1, 0).getDate();
-  for (let i = 0; i < first; i++) html += '<div></div>';
-  let count = 0;
-  for (let d = 1; d <= days; d++) {
-    const k = `${calY}-${pad(calM + 1)}-${pad(d)}`, has = entries.has(k);
-    if (has) count++;
-    const cls = ['day', has && 'has', k === t && 'today', k === editorDate && 'sel'].filter(Boolean).join(' ');
-    html += `<button class="${cls}" data-k="${k}" ${k > t && !has ? 'disabled' : ''}>${d}<span class="dot"></span></button>`;
+/* ---------- calendar (month / week) ---------- */
+let calMode = 'month';
+let calAnchor = todayKey();   // any day inside the shown month/week
+let selDay = null;            // month view: tapped day shown in the preview strip
+document.querySelectorAll('.seg').forEach(b => b.onclick = () => {
+  if (b.dataset.mode === 'week' && calMode === 'month') {
+    // week to show: the tapped day, else today's week if this is the current month, else the month's first week
+    if (selDay) calAnchor = selDay;
+    else if (calAnchor.slice(0, 7) === todayKey().slice(0, 7)) calAnchor = todayKey();
   }
-  g.innerHTML = html;
-  $('#calCount').textContent = count ? `${count} ${count === 1 ? 'entry' : 'entries'} this month` : 'No entries this month';
-  const now = new Date();
-  $('#calNext').disabled = calY > now.getFullYear() || (calY === now.getFullYear() && calM >= now.getMonth());
+  calMode = b.dataset.mode; selDay = null;
+  document.querySelectorAll('.seg').forEach(x => x.classList.toggle('on', x === b));
+  renderCal();
+});
+function canOpen(k) { return k <= todayKey() || entries.has(k); }
+function renderCal() {
+  const t = todayKey(), body = $('#calBody');
+  const a = parseKey(calAnchor);
+  let count = 0, html = '';
+  if (calMode === 'month') {
+    const y = a.getFullYear(), m = a.getMonth();
+    $('#calTitle').textContent = a.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    html = '<div class="mgrid">' + ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="mhead">${d}</div>`).join('');
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < first; i++) html += '<div class="mday other"></div>';
+    for (let d = 1; d <= days; d++) {
+      const k = `${y}-${pad(m + 1)}-${pad(d)}`, has = entries.has(k);
+      if (has) count++;
+      const cls = ['mday', has && 'has', searchHits.has(k) && 'match', k === t && 'today', k === selDay && 'sel'].filter(Boolean).join(' ');
+      html += `<button class="${cls}" data-k="${k}" ${canOpen(k) ? '' : 'disabled'}><span class="n">${d}</span><span class="pv">${esc(previewOf(k, 24))}</span></button>`;
+    }
+    const tail = (7 - ((first + days) % 7)) % 7;
+    for (let i = 0; i < tail; i++) html += '<div class="mday other"></div>';
+    html += '</div>';
+    $('#calNext').disabled = keyOf(new Date(y, m, 1)) >= t.slice(0, 8) + '01';
+    $('#calCount').textContent = count ? `${nEntries(count)} this month` : 'No entries this month';
+  } else {
+    const ws = weekStartOf(calAnchor), we = addDays(ws, 6);
+    const sameMonth = ws.slice(0, 7) === we.slice(0, 7), sameYear = ws.slice(0, 4) === we.slice(0, 4);
+    $('#calTitle').textContent = sameMonth
+      ? `${fmtDate(ws, { month: 'short', day: 'numeric' })} – ${parseKey(we).getDate()}, ${parseKey(we).getFullYear()}`
+      : `${fmtDate(ws, sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })} – ${fmtDate(we, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    html = '<div class="wlist">';
+    for (let i = 0; i < 7; i++) {
+      const k = addDays(ws, i), has = entries.has(k);
+      if (has) count++;
+      const cls = ['wrow', has && 'has', searchHits.has(k) && 'match', k === t && 'today'].filter(Boolean).join(' ');
+      const pv = has ? esc(previewOf(k, 220)) : (k > t ? '' : 'No note — tap to write');
+      html += `<button class="${cls}" data-k="${k}" ${canOpen(k) ? '' : 'disabled'}><span class="wd"><span>${fmtDate(k, { weekday: 'short' })}</span><b>${parseKey(k).getDate()}</b></span><span class="wp${has ? '' : ' empty'}">${pv}</span></button>`;
+    }
+    html += '</div>';
+    $('#calNext').disabled = ws >= weekStartOf(t);
+    $('#calCount').textContent = count ? `${nEntries(count)} this week` : 'No entries this week';
+  }
+  body.innerHTML = html;
+  // search-match note
+  $('#matchNote').hidden = !searchHits.size;
+  if (searchHits.size) $('#matchText').textContent = `🔍 ${searchHits.size} matching day${searchHits.size === 1 ? '' : 's'} outlined red`;
+  renderStrip();
 }
-$('#calGrid').onclick = e => { const b = e.target.closest('.day'); if (b && !b.disabled) openDay(b.dataset.k); };
-$('#calPrev').onclick = () => { if (--calM < 0) { calM = 11; calY--; } renderCal(); };   // month math without date overflow
-$('#calNext').onclick = () => { if (++calM > 11) { calM = 0; calY++; } renderCal(); };
+function renderStrip() {
+  const s = $('#strip');
+  if (calMode !== 'month' || !selDay) { s.hidden = true; return; }
+  s.hidden = false;
+  $('#stripDate').textContent = fmtLong(selDay);
+  const e = entries.get(selDay);
+  const txt = e ? contentOf(e.text).trim() : '';
+  $('#stripText').innerHTML = txt ? highlight(txt.length > 400 ? txt.slice(0, 400) + '…' : txt, lastTerms) : '<i style="color:#999">No note for this day yet.</i>';
+  $('#stripOpen').textContent = e ? '✏️ Open' : '✏️ Write';
+}
+$('#calBody').onclick = e => {
+  const b = e.target.closest('[data-k]');
+  if (!b || b.disabled) return;
+  const k = b.dataset.k;
+  if (calMode === 'week' || k === selDay) return openDay(k);   // week: open straight away; month: second tap opens
+  selDay = k; renderCal();
+};
+$('#stripOpen').onclick = () => { if (selDay) openDay(selDay); };
+$('#calPrev').onclick = () => {
+  if (calMode === 'month') { const a = parseKey(calAnchor); calAnchor = keyOf(new Date(a.getFullYear(), a.getMonth() - 1, 1)); }
+  else calAnchor = addDays(weekStartOf(calAnchor), -7);
+  selDay = null; renderCal();
+};
+$('#calNext').onclick = () => {
+  if (calMode === 'month') { const a = parseKey(calAnchor); calAnchor = keyOf(new Date(a.getFullYear(), a.getMonth() + 1, 1)); }  // day 1: no month skipping
+  else calAnchor = addDays(weekStartOf(calAnchor), 7);
+  selDay = null; renderCal();
+};
 $('#calToday').onclick = () => openDay(todayKey());
+$('#matchClear').onclick = () => { clearSearch(); renderCal(); };
 
 /* ---------- backup / restore ---------- */
 function stampName(prefix, ext) { return `${prefix}-${todayKey()}.${ext}`; }
@@ -565,7 +683,7 @@ function buildBackup() {
 }
 function buildReadable() {
   const keys = [...entries.keys()].sort();
-  let s = `Daily Notes — exported ${fmtLong(todayKey())} — ${keys.length} entries\n\n`;
+  let s = `Daily Notes — exported ${fmtLong(todayKey())} — ${nEntries(keys.length)}\n\n`;
   for (const k of keys) { const h = fmtLong(k); s += `${h}\n${'-'.repeat(h.length)}\n${entries.get(k).text.replace(/\s+$/, '')}\n\n`; }
   return s;
 }
@@ -599,13 +717,13 @@ $('#exportBtn').onclick = async () => {
   lastBackup = Date.now();
   try { await DB.setMeta('lastBackup', lastBackup); } catch (_) {}
   renderBackup();
-  if (r === 'downloaded') tell('Backup saved', "Saved to your phone's Downloads folder. To keep it safe, upload it to Drive from the Files or Drive app.");
+  if (r === 'downloaded') tell('📤 Backup saved', "Saved to your phone's Downloads folder. To keep it safe, upload it to Drive from the Files or Drive app.");
 };
 $('#exportTxtBtn').onclick = async () => {
   await saveNow();
   if (!entries.size) return tell('Nothing to export', 'Write an entry first.');
   const r = await shareOrDownload(stampName('daily-notes', 'txt'), buildReadable(), 'text/plain');
-  if (r === 'downloaded') tell('Exported', "Saved to your phone's Downloads folder.");
+  if (r === 'downloaded') tell('📄 Exported', "Saved to your phone's Downloads folder.");
 };
 $('#importBtn').onclick = () => $('#importFile').click();
 $('#importFile').onchange = async e => {
@@ -613,15 +731,15 @@ $('#importFile').onchange = async e => {
   if (!f) return;
   await saveNow();
   let data;
-  try { data = JSON.parse(await f.text()); } catch (_) { return tell("Can't restore", "That file isn't a Daily Notes backup."); }
+  try { data = JSON.parse(await f.text()); } catch (_) { return tell("Can't import", "That file isn't a Daily Notes backup."); }
   const src = data && typeof data === 'object' && data.entries && typeof data.entries === 'object' && !Array.isArray(data.entries) ? data.entries : data;
-  if (!src || typeof src !== 'object' || Array.isArray(src)) return tell("Can't restore", "That file isn't a Daily Notes backup.");
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return tell("Can't import", "That file isn't a Daily Notes backup.");
   const valid = []; let bad = 0;
   for (const [k, v] of Object.entries(src)) {
     if (isValidKey(k) && typeof v === 'string') { if (meaningful(v)) valid.push([k, v]); }
     else if (!['format', 'version', 'exportedAt', 'count'].includes(k)) bad++;
   }
-  if (!valid.length) return tell("Can't restore", 'No diary entries were found in that file.');
+  if (!valid.length) return tell("Can't import", 'No diary entries were found in that file.');
   const fresh = [], conflicts = []; let same = 0;
   for (const [k, v] of valid) {
     if (!entries.has(k)) fresh.push([k, v]);
@@ -631,15 +749,15 @@ $('#importFile').onchange = async e => {
   const summary = `In the file: ${valid.length} days.\n• ${fresh.length} new\n• ${same} already identical` + (conflicts.length ? `\n• ${conflicts.length} different from what's on this phone` : '') + (bad ? `\n• ${bad} unreadable items will be skipped` : '');
   let mode = 'keep';
   if (conflicts.length) {
-    mode = await ask('Restore backup', summary + '\n\nFor the days that differ:', [
-      { label: 'Combine both versions', value: 'combine', kind: 'primary' },
+    mode = await ask('📥 Import backup', summary + '\n\nFor the days that differ:', [
+      { label: 'Combine both versions', value: 'combine', kind: 'blue' },
       { label: "Use the backup's version", value: 'backup' },
       { label: "Keep what's on this phone", value: 'keep' },
-      { label: 'Cancel', value: null }]);
+      { label: 'Cancel', value: null, kind: 'gray' }]);
     if (mode == null) return;
   } else {
     if (!fresh.length) return tell('Nothing new', 'Everything in this backup is already here.');
-    const ok = await ask('Restore backup', summary, [{ label: `Add ${plural(fresh.length, 'day')}`, value: true, kind: 'primary' }, { label: 'Cancel', value: false }]);
+    const ok = await ask('📥 Import backup', summary, [{ label: `Add ${fresh.length} day${fresh.length === 1 ? '' : 's'}`, value: true, kind: 'blue' }, { label: 'Cancel', value: false, kind: 'gray' }]);
     if (!ok) return;
   }
   const now = Date.now(), list = fresh.map(([k, v]) => ({ date: k, text: v, updated: now }));
@@ -655,21 +773,21 @@ $('#importFile').onchange = async e => {
       list.push({ date: k, text, updated: now }); combined++;
     }
   }
-  try { await DB.putMany(list); } catch (_) { return tell('Restore failed', 'Storage problem — nothing was changed. Try again.'); }
+  try { await DB.putMany(list); } catch (_) { return tell('Import failed', 'Storage problem — nothing was changed. Try again.'); }
   list.forEach(e => entries.set(e.date, e));
-  requestPersist();
+  requestPersist(); renderHeadCount();
   if (entries.has(editorDate)) { editor.value = entries.get(editorDate).text; dirty = false; }
   renderBackup();
-  tell('Restored', `Added ${fresh.length}` + (combined ? `, combined ${combined}` : '') + (replaced ? `, replaced ${replaced}` : '') + '.');
+  tell('✓ Imported', `Added ${fresh.length}` + (combined ? `, combined ${combined}` : '') + (replaced ? `, replaced ${replaced}` : '') + '.');
 };
 async function renderBackup() {
   const st = $('#bkStat');
-  if (!lastBackup) { st.textContent = entries.size ? 'Not backed up yet' : 'No entries yet'; st.className = 'bigstat' + (entries.size ? ' warn' : ''); }
+  if (!lastBackup) { st.textContent = entries.size ? '⚠ Not backed up yet' : 'No entries yet'; st.className = 'bigstat' + (entries.size ? ' warn' : ''); }
   else { st.textContent = `Last backup: ${agoText(lastBackup)}`; st.className = 'bigstat' + (daysSince(lastBackup) >= 7 ? ' warn' : ''); }
-  $('#bkInfo').textContent = `${entries.size} ${entries.size === 1 ? 'entry' : 'entries'} on this phone.` + (lastBackup ? ` Last backed up ${nbsp(new Date(lastBackup).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}.` : '');
+  $('#bkInfo').textContent = `${nEntries(entries.size)} on this phone.` + (lastBackup ? ` Last backed up ${nbsp(new Date(lastBackup).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}.` : '');
   let p = null; try { p = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch (_) {}
   $('#storeInfo').textContent = "Only on this phone, inside Chrome. Clearing Chrome's data or uninstalling Chrome deletes them — that's what backups are for." +
-    (p === true ? ' Protected storage: on (Chrome won\'t auto-clear it).' : p === false ? ' Protected storage: not granted yet — it usually turns on after you add the app to your home screen.' : '');
+    (p === true ? " Protected storage: on (Chrome won't auto-clear it)." : p === false ? ' Protected storage: not granted yet — it usually turns on after you add the app to your home screen.' : '');
 }
 
 /* ---------- lifecycle ---------- */
@@ -721,7 +839,8 @@ async function start() {
 
   editorDate = todayKey();
   editor.value = entries.has(editorDate) ? entries.get(editorDate).text : '';
-  renderDateBar(); renderBanner();
+  $('#gotoDate').max = todayKey();
+  renderDateBar(); renderBanner(); renderHeadCount();
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

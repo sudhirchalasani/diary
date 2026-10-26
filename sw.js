@@ -3,7 +3,7 @@
 // fall back to the saved copy after 3 seconds or when offline.
 // Icons/manifest: saved copy first.
 // This file never sees your notes - they live in the browser's database.
-const CACHE = 'daily-notes-v1';
+const CACHE = 'daily-notes-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
