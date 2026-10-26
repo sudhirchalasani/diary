@@ -51,6 +51,20 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;box-
 #dlMain{font-size:1.25rem;font-weight:700}
 #dlSub{font-size:.85rem;color:var(--muted)}
 .todayrow{display:flex;justify-content:center;padding:4px 0 0}
+.secbar{display:flex;gap:8px;padding:10px 14px 0;overflow-x:auto;scrollbar-width:none}
+.secbar::-webkit-scrollbar{display:none}
+.secchip{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:2px solid var(--blue);background:#fff;color:var(--blue-dark);font-weight:700;font-size:.92rem;white-space:nowrap}
+.secchip.on{background:var(--blue);color:#fff}
+.secchip:active{filter:brightness(.92)}
+.secrow{border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:8px;background:var(--soft)}
+.secline{display:flex;gap:6px;align-items:center}
+.secline .se{width:52px;flex:none;text-align:center;font-size:1.2rem}
+.secline .sn{flex:1;min-width:0}
+.secline input,.secrow textarea{min-height:40px;padding:0 10px;border:2px solid var(--line);border-radius:8px;background:#fff;outline:none}
+.secrow textarea{width:100%;margin-top:6px;padding:6px 10px;resize:vertical;font-size:.92rem}
+.mini{width:36px;height:36px;flex:none;border-radius:8px;background:#fff;border:1px solid var(--line);font-weight:700}
+.mini.del{color:var(--danger)}
+.wrow .we{display:block;font-size:.8rem;line-height:1.2;margin-top:2px}
 #editor{flex:1;min-height:0;margin:10px 14px 0;padding:14px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:17px;line-height:1.55;resize:none;outline:none}
 #editor:focus{border-color:var(--blue)}
 .editfoot{display:flex;align-items:center;gap:8px;padding:10px 14px}
@@ -152,11 +166,11 @@ nav button.on .ic{filter:none;opacity:1}
       <button id="nextDay" class="roundnav" aria-label="Next day">›</button>
     </div>
     <div id="todayRow" class="todayrow" hidden><button id="goToday" class="chip">⤴ Back to today</button></div>
-    <textarea id="editor" placeholder="Tap here to write your daily note…" spellcheck="true" autocapitalize="sentences" aria-label="Diary entry"></textarea>
+    <div id="secBar" class="secbar"></div>
+    <textarea id="editor" placeholder="Tap a section above, or tap here to write…" spellcheck="true" autocapitalize="sentences" aria-label="Diary entry"></textarea>
     <div class="editfoot">
       <span id="status" class="status"></span>
-      <button id="delBtn" class="pill danger">🗑️ Delete</button>
-      <button id="addBtn" class="pill blue">➕ Add entry</button>
+      <button id="delBtn" class="pill danger">🗑️ Delete day</button>
     </div>
   </section>
 
@@ -181,13 +195,14 @@ nav button.on .ic{filter:none;opacity:1}
           </select></label>
         <label><span class="lbl">📆 Go to a date</span><input type="date" id="gotoDate" aria-label="Go to date"></label>
       </div>
+      <label><span class="lbl">Section</span><select id="secFilter" aria-label="Section"></select></label>
       <div id="customRange" class="customrange" hidden>
         <label><span class="lbl">From</span><input type="date" id="from"></label>
         <label><span class="lbl">To</span><input type="date" id="to"></label>
       </div>
     </div>
     <div class="scroll">
-      <p class="hint">Words match in any order. Use "quotes" for an exact phrase. #tags work too. Matching days are outlined red on the calendar.</p>
+      <p class="hint">Words match in any order. Use "quotes" for an exact phrase. #tags work too. Pick a Section to search only that part of each day — with no words, it lists every note in that section. Matching days are outlined red on the calendar.</p>
       <div id="sMeta" class="meta"></div>
       <div id="results"></div>
     </div>
@@ -218,7 +233,7 @@ nav button.on .ic{filter:none;opacity:1}
 
   <!-- BACKUP -->
   <section id="v-backup" class="view">
-    <h2>💾 Backup &amp; restore</h2>
+    <h2>⚙️ Settings</h2>
     <div class="scroll">
       <div class="card">
         <div id="bkStat" class="bigstat"></div>
@@ -231,6 +246,14 @@ nav button.on .ic{filter:none;opacity:1}
         <p>Load a backup file from Drive or your phone. You'll be asked before anything is replaced.</p>
         <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
         <button id="importBtn" class="pill green wide">📥 Import backup</button>
+      </div>
+      <div class="card">
+        <h3>🏷️ Sections</h3>
+        <p>These are the buttons above the writing box. Prompts are optional starter lines (one per line) added when you start that section for the day.</p>
+        <div id="secList"></div>
+        <button id="secAdd" class="pill light wide">➕ Add section</button>
+        <button id="secSave" class="pill blue wide">💾 Save sections</button>
+        <p style="margin-top:8px">Renaming a section keeps old notes findable under the new name. Deleting one keeps its old notes, but they won't show under a Section filter.</p>
       </div>
       <div class="card">
         <h3>📄 Readable copy</h3>
@@ -249,7 +272,7 @@ nav button.on .ic{filter:none;opacity:1}
   <button data-view="write" class="on"><span class="ic">✏️</span>Write</button>
   <button data-view="search"><span class="ic">🔍</span>Search</button>
   <button data-view="cal"><span class="ic">📅</span>Calendar</button>
-  <button data-view="backup"><span class="ic">💾</span>Backup</button>
+  <button data-view="backup"><span class="ic">⚙️</span>Settings</button>
 </nav>
 </div>
 
@@ -281,10 +304,90 @@ const nbsp = s => s.replace(/[  ]/g, ' ');
 const nEntries = n => `${n} ${n === 1 ? 'entry' : 'entries'}`;
 
 // Timestamp lines the app writes, e.g. "— 9:40 PM —" or "— added Oct 27, 9:40 PM —"
-const STAMP_RE = /^— (?:(?:added [A-Z][a-z]{2} \d{1,2}(?:, \d{4})?, )?\d{1,2}:\d{2} [AP]M|from backup) —$/;
+const TIME_PART = '(?:added [A-Z][a-z]{2} \\d{1,2}(?:, \\d{4})?, )?\\d{1,2}:\\d{2} [AP]M';
+const STAMP_RE = new RegExp('^— (?:' + TIME_PART + '|from backup) —$');
+const TIMESTAMP_RE = new RegExp('^— ' + TIME_PART + ' —$');
+const HEAD_RE = new RegExp('^(.+?) — ' + TIME_PART + '$');   // "💪 Health — 9:40 PM"
 const isStamp = line => STAMP_RE.test(line.trim());
-const contentOf = text => (text || '').split('\n').filter(l => !isStamp(l)).join('\n');
-const meaningful = text => contentOf(text).trim().length > 0;
+
+/* ---------- sections ---------- */
+const DEFAULT_SECTIONS = [
+  { emoji: '💪', name: 'Health', prompts: ['Sleep:', 'Exercise:', 'Food:'], aliases: [] },
+  { emoji: '📈', name: 'Trading', prompts: [], aliases: [] },
+  { emoji: '📝', name: 'General', prompts: [], aliases: [] }
+];
+let sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+let retired = [];            // names of deleted sections (old headings still mark section boundaries)
+let sectionsCustomized = false; // true once sections were saved on this phone (edited or restored)
+let nameMap = new Map();     // lowercase name or old name -> lowercase current name ('retired:x' for deleted)
+let promptSet = new Set();
+function rebuildSectionIndex() {
+  nameMap = new Map();
+  retired.forEach(n => nameMap.set(n.toLowerCase(), 'retired:' + n.toLowerCase()));
+  sections.forEach(s => {
+    (s.aliases || []).forEach(a => nameMap.set(a.toLowerCase(), s.name.toLowerCase()));
+    nameMap.set(s.name.toLowerCase(), s.name.toLowerCase());
+  });
+  promptSet = new Set();
+  sections.forEach(s => s.prompts.forEach(p => promptSet.add(p.trim().toLowerCase())));
+}
+rebuildSectionIndex();
+function headingName(line) {
+  const s = line.trim();
+  if (!s || s[0] === '—') return null;
+  const m = s.match(HEAD_RE);
+  if (!m) return null;
+  return nameMap.get(m[1].replace(/^[^\p{L}\p{N}]+/u, '').trim().toLowerCase()) || null;
+}
+const isHeading = l => headingName(l) !== null;
+const isPrompt = l => promptSet.has(l.trim().toLowerCase());       // an untouched prompt like "Sleep:"
+const isContentLine = l => l.trim() !== '' && !isStamp(l) && !isHeading(l) && !isPrompt(l);
+const contentOf = text => (text || '').split('\n').filter(l => !isStamp(l) && !isHeading(l) && !isPrompt(l)).join('\n');
+const meaningful = text => (text || '').split('\n').some(isContentLine);
+function blocksOf(text) {   // [{sec: null (no section) | name, lines: [...]}]
+  const out = [{ sec: null, lines: [] }];
+  for (const l of (text || '').split('\n')) {
+    const h = headingName(l);
+    if (h !== null) out.push({ sec: h, lines: [] }); else out[out.length - 1].lines.push(l);
+  }
+  return out;
+}
+// Text of one section across the day (General also includes notes written outside any section)
+function sectionBody(text, filter) {
+  if (!filter) return contentOf(text);
+  const parts = [];
+  for (const b of blocksOf(text)) {
+    if (filter === 'general' ? (b.sec === null || b.sec === 'general') : b.sec === filter) parts.push(b.lines.filter(isContentLine).join('\n'));
+  }
+  return parts.filter(Boolean).join('\n');
+}
+function emojisOf(text) {
+  const present = new Set(blocksOf(text).filter(b => b.sec && b.lines.some(isContentLine)).map(b => b.sec));
+  return sections.filter(s => present.has(s.name.toLowerCase())).map(s => s.emoji).join(' ');
+}
+// Remove sections that were started but never filled in, and timestamps with nothing written after them.
+function cleanup(t) {
+  const lines = t.split('\n'); let changed = false;
+  const keep = []; let i = 0;
+  while (i < lines.length) {
+    if (isHeading(lines[i])) {
+      let j = i + 1; while (j < lines.length && !isHeading(lines[j])) j++;
+      const block = lines.slice(i, j);
+      if (block.slice(1).some(isContentLine)) keep.push(...block); else changed = true;
+      i = j;
+    } else keep.push(lines[i++]);
+  }
+  const out = [];
+  for (let k = 0; k < keep.length; k++) {
+    if (TIMESTAMP_RE.test(keep[k].trim())) {
+      let m = k + 1; while (m < keep.length && keep[m].trim() === '') m++;
+      if (m === keep.length || isHeading(keep[m])) { changed = true; continue; }
+    }
+    out.push(keep[k]);
+  }
+  if (!changed) return t;
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\s*\n/, '').replace(/\s+$/, '');
+}
 const previewOf = (k, max) => { const e = entries.get(k); if (!e) return ''; const s = contentOf(e.text).replace(/\s+/g, ' ').trim(); return s.length > max ? s.slice(0, max) + '…' : s; };
 
 /* ---------- database (IndexedDB) ---------- */
@@ -387,26 +490,60 @@ let dirty = false, saveTimer = null;
 
 function setStatus(t, cls) { const s = $('#status'); s.textContent = t; s.className = 'status' + (cls ? ' ' + cls : ''); }
 
-function makeStamp() {
+function timePart() {
   const now = new Date();
   const time = nbsp(now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
-  if (editorDate === todayKey()) return `— ${time} —`;
+  if (editorDate === todayKey()) return time;
   const sameYear = parseKey(editorDate).getFullYear() === now.getFullYear();
   const md = nbsp(now.toLocaleDateString('en-US', sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }));
-  return `— added ${md}, ${time} —`;
+  return `added ${md}, ${time}`;
 }
-function caretToEnd() { const n = editor.value.length; editor.setSelectionRange(n, n); editor.scrollTop = editor.scrollHeight; }
+const makeStamp = () => `— ${timePart()} —`;
+function scrollToCaret(pos) {
+  const before = editor.value.slice(0, pos).split('\n').length, total = editor.value.split('\n').length;
+  editor.scrollTop = Math.max(0, editor.scrollHeight * (before / total) - editor.clientHeight / 2);
+}
 function insertStamp() {
   const t = editor.value;
   editor.value = t.trim() === '' ? makeStamp() + '\n' : t.replace(/\s+$/, '') + '\n\n' + makeStamp() + '\n';
-  caretToEnd();
+  const n = editor.value.length; editor.setSelectionRange(n, n); editor.scrollTop = editor.scrollHeight;
 }
-// If the last line is a bare timestamp with nothing written after it, drop it.
-function stripTrailingStamp(t) {
-  const lines = t.replace(/\s+$/, '').split('\n');
-  if (lines.length && isStamp(lines[lines.length - 1])) { lines.pop(); return lines.join('\n').replace(/\s+$/, ''); }
-  return t;
+// Tap a section: first time today -> add its heading (+ prompts) at the end.
+// Already there today -> add a new time line at the end of that section.
+function insertSection(s) {
+  let t = editor.value; const key = s.name.toLowerCase();
+  if (!meaningful(t) && !t.split('\n').some(isHeading)) t = '';
+  const lines = t === '' ? [] : t.split('\n');
+  let hi = -1; lines.forEach((l, i) => { if (headingName(l) === key) hi = i; });
+  let caret;
+  if (hi >= 0) {
+    let j = hi + 1; while (j < lines.length && !isHeading(lines[j])) j++;
+    let k = j; while (k > hi + 1 && lines[k - 1].trim() === '') k--;
+    const ins = [makeStamp(), ''];
+    if (k < lines.length && lines[k].trim() !== '') ins.push('');
+    lines.splice(k, 0, ...ins);
+    caret = lines.slice(0, k + 1).join('\n').length + 1;
+  } else {
+    while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+    if (lines.length) lines.push('');
+    lines.push(`${s.emoji} ${s.name} — ${timePart()}`);
+    const first = lines.length;
+    if (s.prompts.length) s.prompts.forEach(p => lines.push(p.trim() + ' ')); else lines.push('');
+    caret = lines.slice(0, first + 1).join('\n').length;
+  }
+  editor.value = lines.join('\n');
+  editor.focus();
+  editor.setSelectionRange(caret, caret);
+  scrollToCaret(caret);
+  renderSecBar();
 }
+function renderSecBar() {
+  const present = new Set(editor.value.split('\n').map(headingName).filter(Boolean));
+  $('#secBar').innerHTML = sections.map((s, i) =>
+    `<button class="secchip${present.has(s.name.toLowerCase()) ? ' on' : ''}" data-i="${i}">${esc(s.emoji)} ${esc(s.name)}</button>`).join('');
+}
+$('#secBar').addEventListener('mousedown', e => { if (e.target.closest('.secchip')) e.preventDefault(); }); // keep keyboard open
+$('#secBar').onclick = e => { const b = e.target.closest('.secchip'); if (b) insertSection(sections[+b.dataset.i]); };
 
 editor.addEventListener('focus', () => { if (editor.value.trim() === '') insertStamp(); });
 editor.addEventListener('blur', () => { saveNow(); });
@@ -430,14 +567,14 @@ async function saveNow() {
       const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
       if (d && d.date === date && d.text === text) localStorage.removeItem(DRAFT_KEY);
     } catch (_) {}
-    if (date === editorDate) setStatus(meaningful(text) ? '✓ Saved' : '', 'ok');
+    if (date === editorDate) { setStatus(meaningful(text) ? '✓ Saved' : '', 'ok'); renderSecBar(); }
     updateDelBtn();
   } catch (err) {
     if (date === editorDate) { dirty = true; setStatus('⚠ Not saved — storage problem', 'err'); }
   }
 }
 async function leaveDay() {
-  const cleaned = stripTrailingStamp(editor.value);
+  const cleaned = cleanup(editor.value);
   if (cleaned !== editor.value) {
     editor.value = cleaned;
     const stored = entries.has(editorDate) ? entries.get(editorDate).text : '';
@@ -454,6 +591,7 @@ async function openDay(k) {
   dirty = false;
   setStatus('');
   editor.scrollTop = 0;
+  renderSecBar();
   await showView('write');
 }
 function renderDateBar() {
@@ -470,8 +608,6 @@ $('#prevDay').onclick = () => openDay(addDays(editorDate, -1));
 $('#nextDay').onclick = () => openDay(addDays(editorDate, 1));
 $('#goToday').onclick = () => openDay(todayKey());
 $('#dateLabel').onclick = () => gotoCalendarAt(editorDate);
-$('#addBtn').addEventListener('mousedown', e => e.preventDefault()); // keep keyboard open
-$('#addBtn').onclick = () => { insertStamp(); editor.focus(); caretToEnd(); };
 $('#delBtn').onclick = async () => {
   if (!entries.has(editorDate)) return;
   const ok = await ask('🗑️ Delete this entry?', `The entry for ${fmtLong(editorDate)} will be removed from this phone. This can't be undone (unless it's in a backup).`,
@@ -481,6 +617,7 @@ $('#delBtn').onclick = async () => {
   try { await DB.del(editorDate); entries.delete(editorDate); } catch (_) { return tell('Could not delete', 'Storage problem — try again.'); }
   try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
   editor.value = '';
+  renderSecBar();
   setStatus('Deleted');
   updateDelBtn(); renderHeadCount();
 };
@@ -527,9 +664,9 @@ function clip(line, pos) {
   const start = pos < 0 ? 0 : Math.max(0, pos - 50), end = start + MAX;
   return (start > 0 ? '…' : '') + line.slice(start, end) + (end < line.length ? '…' : '');
 }
-function snippets(body, terms) {
+function snippets(body, terms, filtered) {
   const lines = body.split('\n').filter(l => l.trim());
-  if (!terms.length) return lines.slice(0, 2).map(l => clip(l, -1));
+  if (!terms.length) return lines.slice(0, filtered ? 4 : 2).map(l => clip(l, -1));
   const out = [];
   for (const l of lines) {
     const low = l.toLowerCase(); let pos = -1;
@@ -553,31 +690,40 @@ function highlight(s, terms) {
 function runSearch() {
   const terms = parseQuery($('#q').value);
   const [fk, tk] = rangeBounds();
+  const filter = $('#secFilter').value;
+  const sec = sections.find(s => s.name.toLowerCase() === filter);
   const hits = [];
   for (const [k, e] of entries) {
     if (k < fk || k > tk) continue;
-    const body = contentOf(e.text), low = body.toLowerCase();
-    if (terms.every(t => low.includes(t))) hits.push([k, body]);
+    const body = sectionBody(e.text, filter), low = body.toLowerCase();
+    if (!body.trim()) continue;
+    if (terms.every(t => low.includes(t))) hits.push([k, body, emojisOf(e.text)]);
   }
   hits.sort((a, b) => (a[0] < b[0] ? 1 : -1));
   lastTerms = terms;
-  searchHits = new Set(terms.length ? hits.map(h => h[0]) : []);
-  const LIMIT = 300;
+  searchHits = new Set(terms.length || filter ? hits.map(h => h[0]) : []);
+  const LIMIT = 300, q = $('#q').value.trim(), secLbl = sec ? ` in ${sec.emoji} ${sec.name}` : '';
   $('#sMeta').textContent = !entries.size ? 'No entries yet.'
-    : terms.length ? (hits.length ? `Found ${nEntries(hits.length)} for “${$('#q').value.trim()}”` : `No notes found for “${$('#q').value.trim()}”`)
-    : `📋 All notes — ${nEntries(hits.length)}`;
-  $('#results').innerHTML = hits.slice(0, LIMIT).map(([k, body]) =>
-    `<button class="result" data-k="${k}"><div class="rdate">${esc(fmtLong(k))}</div>` +
-    snippets(body, terms).map(l => `<div class="rline">${highlight(l, terms)}</div>`).join('') + '</button>'
+    : terms.length ? (hits.length ? `Found ${nEntries(hits.length)} for “${q}”${secLbl}` : `No notes found for “${q}”${secLbl}`)
+    : sec ? `${sec.emoji} ${sec.name} — ${nEntries(hits.length)}` : `📋 All notes — ${nEntries(hits.length)}`;
+  $('#results').innerHTML = hits.slice(0, LIMIT).map(([k, body, em]) =>
+    `<button class="result" data-k="${k}"><div class="rdate">${esc(fmtLong(k))}${em ? ' <span style="font-weight:400">' + esc(em) + '</span>' : ''}</div>` +
+    snippets(body, terms, !!filter).map(l => `<div class="rline">${highlight(l, terms)}</div>`).join('') + '</button>'
   ).join('') + (hits.length > LIMIT ? `<p class="hint">Showing newest ${LIMIT}. Narrow the date range to see older ones.</p>` : '');
 }
-function clearSearch() { $('#q').value = ''; searchHits = new Set(); lastTerms = []; runSearch(); }
+function clearSearch() { $('#q').value = ''; $('#secFilter').value = ''; searchHits = new Set(); lastTerms = []; runSearch(); }
 let sTimer = null;
 $('#q').addEventListener('input', () => { clearTimeout(sTimer); sTimer = setTimeout(runSearch, 200); });
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); $('#q').blur(); } });
 $('#searchBtn').onclick = () => { runSearch(); $('#q').blur(); };
 $('#clearBtn').onclick = clearSearch;
-$('#allBtn').onclick = () => { $('#q').value = ''; $('#range').value = 'all'; $('#customRange').hidden = true; runSearch(); };
+$('#allBtn').onclick = () => { $('#q').value = ''; $('#range').value = 'all'; $('#secFilter').value = ''; $('#customRange').hidden = true; runSearch(); };
+$('#secFilter').onchange = runSearch;
+function buildSecFilter() {
+  const sel = $('#secFilter'), cur = sel.value;
+  sel.innerHTML = '<option value="">All sections</option>' + sections.map(s => `<option value="${esc(s.name.toLowerCase())}">${esc(s.emoji)} ${esc(s.name)}</option>`).join('');
+  sel.value = sections.some(s => s.name.toLowerCase() === cur) ? cur : '';
+}
 $('#range').onchange = () => { $('#customRange').hidden = $('#range').value !== 'custom'; runSearch(); };
 $('#from').onchange = runSearch; $('#to').onchange = runSearch;
 $('#gotoDate').onchange = e => { const k = e.target.value; e.target.value = ''; if (isValidKey(k)) openDay(k); };
@@ -631,7 +777,8 @@ function renderCal() {
       if (has) count++;
       const cls = ['wrow', has && 'has', searchHits.has(k) && 'match', k === t && 'today'].filter(Boolean).join(' ');
       const pv = has ? esc(previewOf(k, 220)) : (k > t ? '' : 'No note — tap to write');
-      html += `<button class="${cls}" data-k="${k}" ${canOpen(k) ? '' : 'disabled'}><span class="wd"><span>${fmtDate(k, { weekday: 'short' })}</span><b>${parseKey(k).getDate()}</b></span><span class="wp${has ? '' : ' empty'}">${pv}</span></button>`;
+      const em = has ? emojisOf(entries.get(k).text) : '';
+      html += `<button class="${cls}" data-k="${k}" ${canOpen(k) ? '' : 'disabled'}><span class="wd"><span>${fmtDate(k, { weekday: 'short' })}</span><b>${parseKey(k).getDate()}</b>${em ? `<span class="we">${esc(em)}</span>` : ''}</span><span class="wp${has ? '' : ' empty'}">${pv}</span></button>`;
     }
     html += '</div>';
     $('#calNext').disabled = ws >= weekStartOf(t);
@@ -679,7 +826,7 @@ function stampName(prefix, ext) { return `${prefix}-${todayKey()}.${ext}`; }
 function buildBackup() {
   const obj = {};
   [...entries.keys()].sort().forEach(k => { obj[k] = entries.get(k).text; });
-  return JSON.stringify({ format: 'daily-notes-backup', version: 2, exportedAt: new Date().toISOString(), count: entries.size, entries: obj }, null, 2);
+  return JSON.stringify({ format: 'daily-notes-backup', version: 3, exportedAt: new Date().toISOString(), count: entries.size, sections, retiredNames: retired, entries: obj }, null, 2);
 }
 function buildReadable() {
   const keys = [...entries.keys()].sort();
@@ -737,9 +884,10 @@ $('#importFile').onchange = async e => {
   const valid = []; let bad = 0;
   for (const [k, v] of Object.entries(src)) {
     if (isValidKey(k) && typeof v === 'string') { if (meaningful(v)) valid.push([k, v]); }
-    else if (!['format', 'version', 'exportedAt', 'count'].includes(k)) bad++;
+    else if (!['format', 'version', 'exportedAt', 'count', 'sections', 'retiredNames'].includes(k)) bad++;
   }
   if (!valid.length) return tell("Can't import", 'No diary entries were found in that file.');
+  await mergeSections(data);   // before comparing, so section headings from the backup are recognised
   const fresh = [], conflicts = []; let same = 0;
   for (const [k, v] of valid) {
     if (!entries.has(k)) fresh.push([k, v]);
@@ -781,6 +929,7 @@ $('#importFile').onchange = async e => {
   tell('✓ Imported', `Added ${fresh.length}` + (combined ? `, combined ${combined}` : '') + (replaced ? `, replaced ${replaced}` : '') + '.');
 };
 async function renderBackup() {
+  loadSecDraft();
   const st = $('#bkStat');
   if (!lastBackup) { st.textContent = entries.size ? '⚠ Not backed up yet' : 'No entries yet'; st.className = 'bigstat' + (entries.size ? ' warn' : ''); }
   else { st.textContent = `Last backup: ${agoText(lastBackup)}`; st.className = 'bigstat' + (daysSince(lastBackup) >= 7 ? ' warn' : ''); }
@@ -788,6 +937,92 @@ async function renderBackup() {
   let p = null; try { p = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch (_) {}
   $('#storeInfo').textContent = "Only on this phone, inside Chrome. Clearing Chrome's data or uninstalling Chrome deletes them — that's what backups are for." +
     (p === true ? " Protected storage: on (Chrome won't auto-clear it)." : p === false ? ' Protected storage: not granted yet — it usually turns on after you add the app to your home screen.' : '');
+}
+
+/* ---------- sections editor (Settings) ---------- */
+let secDraft = [];
+function loadSecDraft() { secDraft = sections.map(s => ({ emoji: s.emoji, name: s.name, prompts: s.prompts.join('\n'), orig: s.name })); renderSecList(); }
+function renderSecList() {
+  $('#secList').innerHTML = secDraft.map((s, i) => `<div class="secrow" data-i="${i}">
+    <div class="secline"><input class="se" value="${esc(s.emoji)}" maxlength="8" aria-label="Icon"><input class="sn" value="${esc(s.name)}" placeholder="Section name" aria-label="Section name">
+    <button class="mini" data-act="up" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="mini" data-act="down" ${i === secDraft.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="mini del" data-act="del" aria-label="Delete section">✕</button></div>
+    <textarea class="sp" rows="3" placeholder="Prompts (optional, one per line)">${esc(s.prompts)}</textarea></div>`).join('');
+}
+function readSecInputs() {
+  document.querySelectorAll('.secrow').forEach(r => {
+    const s = secDraft[+r.dataset.i];
+    s.emoji = r.querySelector('.se').value.trim(); s.name = r.querySelector('.sn').value.trim(); s.prompts = r.querySelector('.sp').value;
+  });
+}
+$('#secList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  readSecInputs();
+  const i = +b.closest('.secrow').dataset.i, a = b.dataset.act;
+  if (a === 'up') [secDraft[i - 1], secDraft[i]] = [secDraft[i], secDraft[i - 1]];
+  else if (a === 'down') [secDraft[i + 1], secDraft[i]] = [secDraft[i], secDraft[i + 1]];
+  else secDraft.splice(i, 1);
+  renderSecList();
+};
+$('#secAdd').onclick = () => { readSecInputs(); secDraft.push({ emoji: '⭐', name: '', prompts: '', orig: null }); renderSecList(); };
+async function saveSections() {
+  await DB.setMeta('sections', sections); await DB.setMeta('retiredNames', retired);
+}
+$('#secSave').onclick = async () => {
+  readSecInputs();
+  if (!secDraft.length) return tell("Can't save", 'Keep at least one section.');
+  const names = new Set();
+  for (const s of secDraft) {
+    if (!s.name) return tell("Can't save", 'Every section needs a name.');
+    if (s.name.includes('—')) return tell("Can't save", 'Section names can\'t contain the long dash “—”.');
+    if (!/[\p{L}\p{N}]/u.test(s.name)) return tell("Can't save", 'Section names need at least one letter or number.');
+    const k = s.name.toLowerCase();
+    if (names.has(k)) return tell("Can't save", `Two sections are both called “${s.name}”.`);
+    names.add(k);
+    if (!s.emoji) s.emoji = '•';
+  }
+  const oldByName = new Map(sections.map(s => [s.name, s]));
+  const next = secDraft.map(d => {
+    const old = d.orig ? oldByName.get(d.orig) : null;
+    let aliases = old ? [...(old.aliases || [])] : [];
+    if (old && old.name !== d.name) aliases.push(old.name);          // renamed: old headings still count
+    aliases = [...new Set(aliases)].filter(a => !names.has(a.toLowerCase()));
+    return { emoji: d.emoji, name: d.name, prompts: d.prompts.split('\n').map(p => p.trim()).filter(Boolean), aliases };
+  });
+  const kept = new Set(secDraft.filter(d => d.orig).map(d => d.orig));
+  let nr = [...retired];
+  sections.forEach(s => { if (!kept.has(s.name)) nr.push(s.name, ...(s.aliases || [])); });
+  const aliasSet = new Set(next.flatMap(s => s.aliases.map(a => a.toLowerCase())));
+  nr = [...new Set(nr)].filter(n => !names.has(n.toLowerCase()) && !aliasSet.has(n.toLowerCase()));
+  const prev = [sections, retired];
+  sections = next; retired = nr; sectionsCustomized = true; rebuildSectionIndex();
+  try { await saveSections(); } catch (_) { [sections, retired] = prev; rebuildSectionIndex(); return tell('Not saved', 'Storage problem — try again.'); }
+  renderSecBar(); buildSecFilter(); loadSecDraft();
+  tell('✓ Sections saved', 'The buttons above the writing box are updated.');
+};
+// Sections that exist in a backup but not here get added (so a new phone gets your sections back)
+async function mergeSections(data) {
+  if (!data || !Array.isArray(data.sections)) return;
+  const clean = data.sections.filter(s => s && typeof s.name === 'string' && s.name.trim() && !s.name.includes('—'))
+    .map(s => ({ emoji: String(s.emoji || '•').slice(0, 8), name: s.name.trim(),
+      prompts: Array.isArray(s.prompts) ? s.prompts.filter(p => typeof p === 'string' && p.trim()) : [],
+      aliases: Array.isArray(s.aliases) ? s.aliases.filter(a => typeof a === 'string') : [] }));
+  if (!clean.length) return;
+  let added = 0;
+  if (!sectionsCustomized) {
+    // This phone still has the default sections (e.g. a new phone): take the backup's sections as they are
+    sections = clean; retired = []; added = clean.length; sectionsCustomized = true;
+  } else {
+    for (const s of clean) {
+      const all = [s.name, ...s.aliases].map(n => n.toLowerCase());
+      if (all.some(n => nameMap.has(n) && !nameMap.get(n).startsWith('retired:'))) continue;
+      sections.push(s); added++;
+    }
+  }
+  if (Array.isArray(data.retiredNames)) data.retiredNames.forEach(n => { if (typeof n === 'string' && !nameMap.has(n.toLowerCase())) retired.push(n); });
+  retired = retired.filter(n => !sections.some(s => s.name.toLowerCase() === n.toLowerCase()));
+  rebuildSectionIndex();
+  try { await saveSections(); } catch (_) {}
+  if (added) { renderSecBar(); buildSecFilter(); }
 }
 
 /* ---------- lifecycle ---------- */
@@ -808,6 +1043,13 @@ window.addEventListener('pagehide', () => { saveNow(); });
 async function start() {
   try {
     await DB.open();
+    try {
+      const s = await DB.getMeta('sections');
+      if (Array.isArray(s) && s.length) { sections = s; sectionsCustomized = true; }
+      const r = await DB.getMeta('retiredNames');
+      if (Array.isArray(r)) retired = r;
+    } catch (_) {}
+    rebuildSectionIndex();
     (await DB.all()).forEach(e => entries.set(e.date, e));
     dbOK = true;
   } catch (_) { dbOK = false; }
@@ -840,6 +1082,7 @@ async function start() {
   editorDate = todayKey();
   editor.value = entries.has(editorDate) ? entries.get(editorDate).text : '';
   $('#gotoDate').max = todayKey();
+  buildSecFilter(); renderSecBar();
   renderDateBar(); renderBanner(); renderHeadCount();
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
